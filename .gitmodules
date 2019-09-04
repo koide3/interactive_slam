@@ -1,0 +1,6 @@
+[submodule "thirdparty/portable-file-dialogs"]
+	path = thirdparty/portable-file-dialogs
+	url = https://github.com/samhocevar/portable-file-dialogs.git
+[submodule "thirdparty/imgui"]
+	path = thirdparty/imgui
+	url = https://github.com/ocornut/imgui.git

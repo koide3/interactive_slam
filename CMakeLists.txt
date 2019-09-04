@@ -1,0 +1,86 @@
+cmake_minimum_required(VERSION 2.8.3)
+project(interactive_map_correction)
+
+add_compile_options(-std=c++11)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
+find_package(catkin REQUIRED COMPONENTS roscpp hdl_graph_slam)
+
+find_package(GLM REQUIRED)
+find_package(GLEW REQUIRED)
+find_package(OpenGL REQUIRED)
+find_package(PCL REQUIRED)
+
+find_package(Eigen3 REQUIRED)
+find_package(Boost REQUIRED filesystem program_options)
+
+find_package(G2O REQUIRED)
+include_directories(SYSTEM ${G2O_INCLUDE_DIR} ${G2O_INCLUDE_DIRS})
+link_directories(${G2O_LIBRARY_DIRS})
+
+##################
+# catking config #
+##################
+catkin_package(
+#  INCLUDE_DIRS include
+#  LIBRARIES interactive_map_correction
+#  CATKIN_DEPENDS other_catkin_pkg
+#  DEPENDS system_lib
+)
+
+###########
+## Build ##
+###########
+
+include_directories(
+  include
+  thirdparty/imgui
+  thirdparty/imgui/examples
+  thirdparty/portable-file-dialogs
+  ${GLM_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
+  ${catkin_INCLUDE_DIRS}
+)
+
+# imgui
+add_definitions(-DIMGUI_IMPL_OPENGL_LOADER_GLEW)
+
+###########
+## Build ##
+###########
+
+add_library(imgui
+  thirdparty/imgui/imgui.cpp
+  thirdparty/imgui/imgui_demo.cpp
+  thirdparty/imgui/imgui_draw.cpp
+  thirdparty/imgui/imgui_widgets.cpp
+  thirdparty/imgui/examples/imgui_impl_glfw.cpp
+  thirdparty/imgui/examples/imgui_impl_opengl3.cpp
+)
+
+add_executable(interactive_map_correction
+  src/interactive_map_correction.cpp
+
+  src/glk/pointcloud_buffer.cpp
+  src/hdl_graph_slam/interactive_graph.cpp
+)
+target_link_libraries(interactive_map_correction
+  ${PCL_LIBRARIES}
+  ${G2O_TYPES_DATA}
+  ${G2O_CORE_LIBRARY}
+  ${G2O_STUFF_LIBRARY}
+  ${G2O_SOLVER_PCG}
+  ${G2O_SOLVER_CSPARSE}
+  ${G2O_SOLVER_CHOLMOD}
+  ${G2O_TYPES_SLAM3D}
+  ${G2O_TYPES_SLAM3D_ADDONS}
+  ${OPENGL_LIBRARIES}
+  ${GLEW_LIBRARIES}
+  glfw
+  imgui
+  hdl_graph_slam_nodelet
+)
+
+file(COPY data DESTINATION .)

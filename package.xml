@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>interactive_map_correction</name>
+  <version>0.0.0</version>
+  <description>The interactive_map_correction package</description>
+
+  <maintainer email="k.koide@aist.go.jp">koide</maintainer>
+
+  <license>BSD</license>
+
+
+  <url type="website">https://github.com/koide3/interactive_map_correction</url>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>hdl_graph_slam</build_depend>
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <export>
+  </export>
+</package>
