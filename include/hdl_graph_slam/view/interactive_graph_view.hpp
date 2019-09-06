@@ -4,8 +4,8 @@
 #include <unordered_map>
 #include <glk/glsl_shader.hpp>
 
-#include <hdl_graph_slam/view/drawable.hpp>
 #include <hdl_graph_slam/view/keyframe_view.hpp>
+#include <hdl_graph_slam/view/drawable_object.hpp>
 #include <hdl_graph_slam/interactive_graph.hpp>
 
 namespace hdl_graph_slam {
@@ -15,7 +15,8 @@ public:
   InteractiveGraphView() {}
 
   void update_view() {
-    for(const auto& keyframe : keyframes) {
+    for(const auto& key_item : keyframes) {
+      auto& keyframe = key_item.second;
       auto found = keyframes_view_map.find(keyframe);
       if(found == keyframes_view_map.end()) {
         keyframes_view.push_back(std::make_shared<KeyFrameView>(keyframe));
@@ -29,19 +30,20 @@ public:
   void draw(glk::GLSLShader& shader) {
     update_view();
 
-    for(auto& drawable: drawables) {
+    for(auto& drawable : drawables) {
       if(drawable->available()) {
         drawable->draw(shader);
       }
     }
   }
-private:
+
+public:
   std::vector<KeyFrameView::Ptr> keyframes_view;
   std::unordered_map<KeyFrame::Ptr, KeyFrameView::Ptr> keyframes_view_map;
 
-  std::vector<Drawable::Ptr> drawables;
+  std::vector<DrawableObject::Ptr> drawables;
 };
 
-}
+}  // namespace hdl_graph_slam
 
 #endif

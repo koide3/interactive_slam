@@ -12,6 +12,7 @@
   <url type="website">https://github.com/koide3/interactive_map_correction</url>
 
   <build_depend>roscpp</build_depend>
+  <build_depend>ndt_omp</build_depend>
   <build_depend>hdl_graph_slam</build_depend>
   <buildtool_depend>catkin</buildtool_depend>
 

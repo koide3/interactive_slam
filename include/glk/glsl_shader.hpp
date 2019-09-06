@@ -10,6 +10,7 @@
 #include <unordered_map>
 
 #include <GL/glew.h>
+#include <Eigen/Dense>
 
 namespace glk {
 
@@ -87,8 +88,16 @@ public:
         return mat;
     }
 
-    void set_uniform(const std::string& name, const Eigen::Matrix4f& matrix) {
-        glUniformMatrix4fv(uniform(name), 1, GL_FALSE, matrix.data());
+    void set_uniform(const std::string& name, int value) {
+        glUniform1i(uniform(name), value);
+    }
+
+    void set_uniform(const std::string& name, float value) {
+        glUniform1f(uniform(name), value);
+    }
+
+    void set_uniform(const std::string& name, const Eigen::Vector2f& vector) {
+        glUniform2fv(uniform(name), 1, vector.data());
     }
 
     void set_uniform(const std::string& name, const Eigen::Vector4f& vector) {
@@ -98,6 +107,11 @@ public:
     void set_uniform(const std::string& name, const Eigen::Vector4i& vector) {
         glUniform4iv(uniform(name), 1, vector.data());
     }
+
+    void set_uniform(const std::string& name, const Eigen::Matrix4f& matrix) {
+        glUniformMatrix4fv(uniform(name), 1, GL_FALSE, matrix.data());
+    }
+
 
 private:
     GLuint read_shader_from_file(const std::string& filename, GLuint shader_type) {

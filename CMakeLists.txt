@@ -4,7 +4,7 @@ project(interactive_map_correction)
 add_compile_options(-std=c++11)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
-find_package(catkin REQUIRED COMPONENTS roscpp hdl_graph_slam)
+find_package(catkin REQUIRED COMPONENTS roscpp ndt_omp hdl_graph_slam)
 
 find_package(GLM REQUIRED)
 find_package(GLEW REQUIRED)
@@ -64,7 +64,9 @@ add_executable(interactive_map_correction
   src/interactive_map_correction.cpp
 
   src/glk/pointcloud_buffer.cpp
+  src/glk/primitives/primitives.cpp
   src/hdl_graph_slam/interactive_graph.cpp
+  src/hdl_graph_slam/loop_close_modal.cpp
 )
 target_link_libraries(interactive_map_correction
   ${PCL_LIBRARIES}

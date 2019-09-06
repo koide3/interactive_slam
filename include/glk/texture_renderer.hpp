@@ -8,7 +8,7 @@ namespace glk {
 
 class TextureRenderer {
 public:
-    TextureRenderer() {
+    TextureRenderer(const std::string& data_directory) {
         std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> vertices = {
             Eigen::Vector3f(-1.0f, -1.0f, 0.0f),
             Eigen::Vector3f( 1.0f, -1.0f, 0.0f),
@@ -23,12 +23,12 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, sizeof(GL_FLOAT) * 3 * vertices.size(), vertices.data(), GL_STATIC_DRAW);
 
-        if(!shader.init("data/shader/texture")) {
+        if(!shader.init(data_directory + "/shader/texture")) {
             return;
         }
 
         shader.use();
-        GLint position_loc = shader.attrib("position");
+        GLint position_loc = shader.attrib("vert_position");
 
         glBindVertexArray(vao);
         glEnableVertexAttribArray(position_loc);
@@ -48,11 +48,14 @@ public:
     void draw(GLuint texture) {
         shader.use();
 
+        glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, texture);
 
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+        glDisable(GL_TEXTURE_2D);
     }
 
 private:
