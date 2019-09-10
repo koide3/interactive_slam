@@ -2,9 +2,9 @@
 #define GLK_PRIMITIVES_COORDINATE_SYSTEM_HPP
 
 #include <vector>
-#include <Eigen/Dense>
+#include <Eigen/Core>
 
-#include <GL/glew.h>
+#include <GL/gl3w.h>
 #include <glk/drawble.hpp>
 #include <glk/glsl_shader.hpp>
 
@@ -23,7 +23,7 @@ public:
     vertices.push_back(Eigen::Vector3f::Zero());
     vertices.push_back(Eigen::Vector3f::UnitZ());
 
-    for(const auto& vertex: vertices) {
+    for (const auto& vertex : vertices) {
       colors.push_back(Eigen::Vector4f(vertex[0], vertex[1], vertex[2], 1.0f));
     }
 
@@ -70,6 +70,6 @@ public:
   GLuint vao;
   GLuint vbo;
 };
-}
+}  // namespace glk
 
 #endif

@@ -2,9 +2,9 @@
 #define GLK_DRAWABLE_HPP
 
 #include <vector>
-#include <Eigen/Dense>
+#include <Eigen/Core>
 
-#include <GL/glew.h>
+#include <GL/gl3w.h>
 #include <glk/glsl_shader.hpp>
 
 namespace glk {

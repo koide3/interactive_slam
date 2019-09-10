@@ -1,44 +1,49 @@
 {
-  "configurations": [
-    {
-      "browse": {
-        "databaseFilename": "",
-        "limitSymbolsToIncludedHeaders": true
-      },
-      "includePath": [
-        "/home/koide/catkin_ws/devel/include/**",
-        "/opt/ros/melodic/include/**",
-        "/home/koide/catkin_ws/src/open_ptrack_v2/bayes/include/**",
-        "/home/koide/catkin_ws/src/open_ptrack_v2/body_pose_estimation/include/**",
-        "/home/koide/catkin_ws/src/calibration_toolkit/calibration_common/include/**",
-        "/home/koide/catkin_ws/src/ccf_person_identification/include/**",
-        "/home/koide/catkin_ws/src/open_ptrack_v2/detection/include/**",
-        "/home/koide/catkin_ws/src/hdl_graph_slam/include/**",
-        "/home/koide/catkin_ws/src/hdl_localization/include/**",
-        "/home/koide/catkin_ws/src/interactive_map_correction/include/**",
-        "/home/koide/catkin_ws/src/calibration_toolkit/kinect/include/**",
-        "/home/koide/catkin_ws/src/iai_kinect2/kinect2_bridge/include/**",
-        "/home/koide/catkin_ws/src/iai_kinect2/kinect2_calibration/include/**",
-        "/home/koide/catkin_ws/src/iai_kinect2/kinect2_registration/include/**",
-        "/home/koide/catkin_ws/src/libmot/include/**",
-        "/home/koide/catkin_ws/src/monocular_people_tracking/include/**",
-        "/home/koide/catkin_ws/src/monocular_person_following/include/**",
-        "/home/koide/catkin_ws/src/ndt_omp/include/**",
-        "/home/koide/catkin_ws/src/open_ptrack_v2/opt_calibration/include/**",
-        "/home/koide/catkin_ws/src/open_ptrack_v2/opt_msgs/include/**",
-        "/home/koide/catkin_ws/src/open_ptrack_v2/opt_utils/include/**",
-        "/home/koide/catkin_ws/src/pointgrey_camera_driver/pointgrey_camera_driver/include/**",
-        "/home/koide/catkin_ws/src/open_ptrack_v2/body_pose_recognition/pose_recognition/include/**",
-        "/home/koide/catkin_ws/src/open_ptrack_v2/recognition/include/**",
-        "/home/koide/catkin_ws/src/rtpose_wrapper/include/**",
-        "/home/koide/catkin_ws/src/sparse_dynamic_calibration/include/**",
-        "/home/koide/catkin_ws/src/open_ptrack_v2/body_pose_recognition/standard_pose/include/**",
-        "/home/koide/catkin_ws/src/open_ptrack_v2/swissranger_camera/include/**",
-        "/home/koide/catkin_ws/src/open_ptrack_v2/tracking/include/**",
-        "/home/koide/catkin_ws/src/open_ptrack_v2/yolo_detector/include/**",
-        "/usr/include/**"
-      ],
-      "name": "ROS"
-    }
-  ]
+    "configurations": [
+        {
+            "browse": {
+                "databaseFilename": "",
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "includePath": [
+                "/home/koide/catkin_ws/devel/include/**",
+                "/opt/ros/melodic/include/**",
+                "/home/koide/catkin_ws/src/open_ptrack_v2/bayes/include/**",
+                "/home/koide/catkin_ws/src/open_ptrack_v2/body_pose_estimation/include/**",
+                "/home/koide/catkin_ws/src/calibration_toolkit/calibration_common/include/**",
+                "/home/koide/catkin_ws/src/ccf_person_identification/include/**",
+                "/home/koide/catkin_ws/src/open_ptrack_v2/detection/include/**",
+                "/home/koide/catkin_ws/src/hdl_graph_slam/include/**",
+                "/home/koide/catkin_ws/src/hdl_localization/include/**",
+                "/home/koide/catkin_ws/src/interactive_map_correction/include/**",
+                "/home/koide/catkin_ws/src/calibration_toolkit/kinect/include/**",
+                "/home/koide/catkin_ws/src/iai_kinect2/kinect2_bridge/include/**",
+                "/home/koide/catkin_ws/src/iai_kinect2/kinect2_calibration/include/**",
+                "/home/koide/catkin_ws/src/iai_kinect2/kinect2_registration/include/**",
+                "/home/koide/catkin_ws/src/libmot/include/**",
+                "/home/koide/catkin_ws/src/monocular_people_tracking/include/**",
+                "/home/koide/catkin_ws/src/monocular_person_following/include/**",
+                "/home/koide/catkin_ws/src/ndt_omp/include/**",
+                "/home/koide/catkin_ws/src/open_ptrack_v2/opt_calibration/include/**",
+                "/home/koide/catkin_ws/src/open_ptrack_v2/opt_msgs/include/**",
+                "/home/koide/catkin_ws/src/open_ptrack_v2/opt_utils/include/**",
+                "/home/koide/catkin_ws/src/pointgrey_camera_driver/pointgrey_camera_driver/include/**",
+                "/home/koide/catkin_ws/src/open_ptrack_v2/body_pose_recognition/pose_recognition/include/**",
+                "/home/koide/catkin_ws/src/open_ptrack_v2/recognition/include/**",
+                "/home/koide/catkin_ws/src/rtpose_wrapper/include/**",
+                "/home/koide/catkin_ws/src/sparse_dynamic_calibration/include/**",
+                "/home/koide/catkin_ws/src/open_ptrack_v2/body_pose_recognition/standard_pose/include/**",
+                "/home/koide/catkin_ws/src/open_ptrack_v2/swissranger_camera/include/**",
+                "/home/koide/catkin_ws/src/open_ptrack_v2/tracking/include/**",
+                "/home/koide/catkin_ws/src/open_ptrack_v2/yolo_detector/include/**",
+                "/usr/include/**"
+            ],
+            "name": "ROS",
+            "intelliSenseMode": "gcc-x64",
+            "compilerPath": "/usr/lib/ccache/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++17"
+        }
+    ],
+    "version": 4
 }

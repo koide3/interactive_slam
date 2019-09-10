@@ -302,7 +302,7 @@ void LoopCloseModal::draw_canvas() {
 
   canvas->shader->set_uniform("model_matrix", (relative * Eigen::UniformScaling<double>(3.0)).cast<float>().matrix());
   canvas->shader->set_uniform("material_color", Eigen::Vector4f(1.0f, 1.0f, 1.0f, 1.0f));
-  glk::Primitives::instance()->primitive(glk::COORDINATE_SYSTEM).draw(*canvas->shader);
+  glk::Primitives::instance()->primitive(glk::Primitives::COORDINATE_SYSTEM).draw(*canvas->shader);
   canvas->unbind();
 }
 }

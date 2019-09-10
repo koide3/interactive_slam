@@ -1,7 +1,10 @@
 #include <hdl_graph_slam/interactive_graph.hpp>
 
+
 #include <chrono>
 #include <boost/filesystem.hpp>
+#include <g2o/core/sparse_optimizer.h>
+
 #include <hdl_graph_slam/graph_slam.hpp>
 #include <hdl_graph_slam/information_matrix_calculator.hpp>
 
@@ -61,6 +64,7 @@ namespace hdl_graph_slam {
   }
 
   void InteractiveGraph::optimize() {
+    g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
     auto t1 = std::chrono::high_resolution_clock::now();
 
     chi2_before = graph->chi2();

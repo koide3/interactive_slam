@@ -44,7 +44,7 @@ class KeyFrameView : public DrawableObject {
 
       model_matrix.block<3, 3>(0, 0) *= 0.35;
       shader.set_uniform("model_matrix", model_matrix);
-      const auto& sphere = glk::Primitives::instance()->primitive(glk::SPHERE);
+      const auto& sphere = glk::Primitives::instance()->primitive(glk::Primitives::SPHERE);
       sphere.draw(shader);
     }
 
@@ -65,7 +65,7 @@ class KeyFrameView : public DrawableObject {
 
       shader.set_uniform("color_mode", 1);
       shader.set_uniform("info_values", Eigen::Vector4i(KEYFRAME, kf->id(), 0, 0));
-      const auto& sphere = glk::Primitives::instance()->primitive(glk::SPHERE);
+      const auto& sphere = glk::Primitives::instance()->primitive(glk::Primitives::SPHERE);
       sphere.draw(shader);
     }
 

@@ -1,13 +1,6 @@
 #include <memory>
 #include <imgui.h>
-#include <imgui_internal.h>
 #include <portable-file-dialogs.h>
-
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
-
-#include <glk/frame_buffer.hpp>
-#include <glk/texture_renderer.hpp>
 
 #include <guik/gl_canvas.hpp>
 #include <guik/camera_control.hpp>
@@ -25,8 +18,8 @@ class InteractiveMapCorrectionApplication : public guik::Application {
 public:
   InteractiveMapCorrectionApplication() : Application() {}
 
-  bool init() override {
-    if(!Application::init()) {
+  bool init(const Eigen::Vector2i& size, const char* glsl_version="#version 330") override {
+    if(!Application::init(size, glsl_version)) {
       return false;
     }
 
@@ -37,7 +30,7 @@ public:
 
     main_canvas.reset(new guik::GLCanvas(data_directory, Eigen::Vector2i(1920, 1080)));
     if(!main_canvas->ready()) {
-      glfwWindowShouldClose(window);
+      close();
     }
 
     graph.reset(new InteractiveGraphView());
@@ -54,7 +47,7 @@ public:
 
     {
       ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground;
-      ImGui::Begin("", nullptr, flags);
+      ImGui::Begin("##stats", nullptr, flags);
       ImGui::Text("Graph");
       ImGui::Text("# vertices: %d", graph->num_vertices());
       ImGui::Text("# edges: %d", graph->num_edges());
@@ -78,7 +71,7 @@ public:
     main_canvas->bind();
     main_canvas->shader->set_uniform("point_scale", 50.0f);
 
-    const auto& coord = glk::Primitives::instance()->primitive(glk::COORDINATE_SYSTEM);
+    const auto& coord = glk::Primitives::instance()->primitive(glk::Primitives::COORDINATE_SYSTEM);
     main_canvas->shader->set_uniform("model_matrix", (Eigen::UniformScaling<float>(3.0f) * Eigen::Isometry3f::Identity()).matrix());
     glLineWidth(5.0f);
     coord.draw(*main_canvas->shader);
@@ -112,7 +105,7 @@ private:
       }
 
       if(ImGui::MenuItem("Quit")) {
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
+        close();
       }
 
       ImGui::EndMenu();
@@ -239,7 +232,7 @@ private:
 int main(int argc, char** argv) {
   std::unique_ptr<guik::Application> app(new hdl_graph_slam::InteractiveMapCorrectionApplication());
 
-  if(!app->init()) {
+  if(!app->init(Eigen::Vector2i(1920, 1080))) {
     return 1;
   }
 
