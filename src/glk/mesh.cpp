@@ -34,7 +34,7 @@ Mesh::Mesh(const std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Ve
 Mesh ::~Mesh() {
   glDeleteBuffers(1, &vbo);
   glDeleteBuffers(1, &ebo);
-  glDeleteBuffers(1, &vao);
+  glDeleteVertexArrays(1, &vao);
 }
 
 void Mesh::draw(glk::GLSLShader& shader) const {

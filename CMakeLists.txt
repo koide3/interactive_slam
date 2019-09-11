@@ -68,6 +68,7 @@ target_link_libraries(imgui
 )
 
 add_library(guik STATIC
+  src/glk/lines.cpp
   src/glk/mesh.cpp
   src/glk/glsl_shader.cpp
   src/glk/frame_buffer.cpp
@@ -85,6 +86,7 @@ add_executable(interactive_map_correction
   src/interactive_map_correction.cpp
   src/hdl_graph_slam/interactive_graph.cpp
   src/hdl_graph_slam/loop_close_modal.cpp
+  src/hdl_graph_slam/view/edge_view.cpp
 )
 target_link_libraries(interactive_map_correction
   ${PCL_LIBRARIES}

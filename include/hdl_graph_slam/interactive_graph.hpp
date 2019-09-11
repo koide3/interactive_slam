@@ -15,7 +15,7 @@ namespace hdl_graph_slam {
 
 class InformationMatrixCalculator;
 
-class InteractiveGraph : private GraphSLAM {
+class InteractiveGraph : protected GraphSLAM {
 public:
   InteractiveGraph();
   virtual ~InteractiveGraph();

@@ -4,15 +4,18 @@
 #include <unordered_map>
 #include <glk/glsl_shader.hpp>
 
+#include <hdl_graph_slam/interactive_graph.hpp>
+
+#include <hdl_graph_slam/view/edge_view.hpp>
 #include <hdl_graph_slam/view/keyframe_view.hpp>
 #include <hdl_graph_slam/view/drawable_object.hpp>
-#include <hdl_graph_slam/interactive_graph.hpp>
 
 namespace hdl_graph_slam {
 
 class InteractiveGraphView : public InteractiveGraph {
 public:
   InteractiveGraphView() {}
+  virtual ~InteractiveGraphView() {}
 
   void update_view() {
     for(const auto& key_item : keyframes) {
@@ -23,6 +26,15 @@ public:
         keyframes_view_map[keyframe] = keyframes_view.back();
 
         drawables.push_back(keyframes_view.back());
+      }
+    }
+
+    for(const auto& edge: graph->edges()) {
+      auto edge_view = EdgeView::create(edge);
+      if(edge_view) {
+        edges_view.push_back(edge_view);
+
+        drawables.push_back(edge_view);
       }
     }
   }
@@ -40,6 +52,8 @@ public:
 public:
   std::vector<KeyFrameView::Ptr> keyframes_view;
   std::unordered_map<KeyFrame::Ptr, KeyFrameView::Ptr> keyframes_view_map;
+
+  std::vector<EdgeView::Ptr> edges_view;
 
   std::vector<DrawableObject::Ptr> drawables;
 };

@@ -8,9 +8,14 @@ uniform int color_mode;
 uniform vec4 material_color;
 
 uniform vec2 z_range;
+uniform ivec4 info_values;
 
 in vec3 vert_position;
+in vec4 vert_color;
+in ivec4 vert_info;
+
 out vec4 frag_color;
+flat out ivec4 frag_info;
 out vec3 frag_world_position;
 
 vec3 turbo(in float x) {
@@ -41,10 +46,14 @@ void main() {
     frag_world_position = world_position.xyz;
     gl_Position = projection_matrix * view_matrix * world_position;
 
+    frag_info = info_values;
     if(color_mode == 0) {
         frag_color = rainbow(frag_world_position);
     } else if(color_mode == 1) {
         frag_color = material_color;
+    } else if(color_mode == 2) {
+        frag_color = vert_color;
+        frag_info = vert_info;
     }
 
     vec3 ndc = gl_Position.xyz / gl_Position.w;
