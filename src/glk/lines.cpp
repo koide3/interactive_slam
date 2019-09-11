@@ -65,7 +65,7 @@ void Lines::draw(glk::GLSLShader& shader) const {
     info_loc = shader.attrib("vert_info");
     glEnableVertexAttribArray(info_loc);
     glBindBuffer(GL_ARRAY_BUFFER, ibo);
-    glVertexAttribPointer(info_loc, 4, GL_INT, GL_FALSE, 0, 0);
+    glVertexAttribIPointer(info_loc, 4, GL_INT, 0, 0);
   }
 
   glDrawArrays(GL_LINES, 0, num_vertices);

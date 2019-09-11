@@ -8,13 +8,16 @@
 
 #include <hdl_graph_slam/view/edge_view.hpp>
 #include <hdl_graph_slam/view/keyframe_view.hpp>
+#include <hdl_graph_slam/view/line_buffer.hpp>
 #include <hdl_graph_slam/view/drawable_object.hpp>
 
 namespace hdl_graph_slam {
 
 class InteractiveGraphView : public InteractiveGraph {
 public:
-  InteractiveGraphView() {}
+  InteractiveGraphView() {
+    line_buffer.reset(new LineBuffer());
+  }
   virtual ~InteractiveGraphView() {}
 
   void update_view() {
@@ -30,9 +33,15 @@ public:
     }
 
     for(const auto& edge: graph->edges()) {
-      auto edge_view = EdgeView::create(edge);
+      auto found = edges_view_map.find(edge);
+      if(found != edges_view_map.end()) {
+        continue;
+      }
+
+      auto edge_view = EdgeView::create(edge, *line_buffer);
       if(edge_view) {
         edges_view.push_back(edge_view);
+        edges_view_map[edge] = edge_view;
 
         drawables.push_back(edge_view);
       }
@@ -41,19 +50,25 @@ public:
 
   void draw(glk::GLSLShader& shader) {
     update_view();
+    line_buffer->clear();
 
     for(auto& drawable : drawables) {
       if(drawable->available()) {
         drawable->draw(shader);
       }
     }
+
+    line_buffer->draw(shader);
   }
 
 public:
+  std::unique_ptr<LineBuffer> line_buffer;
+
   std::vector<KeyFrameView::Ptr> keyframes_view;
   std::unordered_map<KeyFrame::Ptr, KeyFrameView::Ptr> keyframes_view_map;
 
   std::vector<EdgeView::Ptr> edges_view;
+  std::unordered_map<g2o::HyperGraph::Edge*, EdgeView::Ptr> edges_view_map;
 
   std::vector<DrawableObject::Ptr> drawables;
 };

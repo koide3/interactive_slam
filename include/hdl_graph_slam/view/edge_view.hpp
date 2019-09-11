@@ -5,6 +5,7 @@
 
 #include <glk/glsl_shader.hpp>
 #include <hdl_graph_slam/graph_slam.hpp>
+#include <hdl_graph_slam/view/line_buffer.hpp>
 #include <hdl_graph_slam/view/drawable_object.hpp>
 
 namespace hdl_graph_slam {
@@ -13,10 +14,10 @@ class EdgeView : public DrawableObject {
 public:
   using Ptr = std::shared_ptr<EdgeView>;
 
-  EdgeView(g2o::HyperGraph::Edge* edge);
+  EdgeView(g2o::HyperGraph::Edge* edge, LineBuffer& line_buffer);
   virtual ~EdgeView();
 
-  static EdgeView::Ptr create(g2o::HyperGraph::Edge* edge);
+  static EdgeView::Ptr create(g2o::HyperGraph::Edge* edge, LineBuffer& line_buffer);
 
   long id() const;
 
@@ -29,7 +30,8 @@ public:
 private:
   EdgeView();
 
-private:
+protected:
+  LineBuffer& line_buffer;
   g2o::HyperGraph::Edge* edge;
 };
 

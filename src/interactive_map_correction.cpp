@@ -80,16 +80,9 @@ public:
     loop_close_modal->draw_gl(*main_canvas->shader);
     graph->draw(*main_canvas->shader);
 
-    std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> vertices = {Eigen::Vector3f::Zero(), Eigen::Vector3f::Ones() * 100.0f};
+    std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> vertices = {Eigen::Vector3f::Zero(), Eigen::Vector3f::Ones() * 2.0f};
     std::vector<Eigen::Vector4f, Eigen::aligned_allocator<Eigen::Vector4f>> colors = {Eigen::Vector4f(0.0f, 0.0f, 1.0f, 1.0f), Eigen::Vector4f(0.0f, 1.0f, 0.0f, 1.0f)};
-    std::vector<Eigen::Vector4i, Eigen::aligned_allocator<Eigen::Vector4i>> infos = {Eigen::Vector4i(2, 0, 9, 0), Eigen::Vector4i(2, 0, 9, 0)};
-
-    main_canvas->shader->use();
-    main_canvas->shader->set_uniform("color_mode", 2);
-    glk::Lines lines(vertices, colors, infos);
-    lines.draw(*main_canvas->shader);
-
-    main_canvas->shader->set_uniform("color_mode", 0);
+    std::vector<Eigen::Vector4i, Eigen::aligned_allocator<Eigen::Vector4i>> infos = {Eigen::Vector4i(2, 0, 2, 0), Eigen::Vector4i(2, 0, 2, 0)};
 
     main_canvas->unbind();
     main_canvas->render_to_screen();
