@@ -10,7 +10,7 @@ private:
   Primitives() { meshes.resize(NUM_PRIMITIVES, nullptr); }
 
 public:
-  enum PrimitiveType { ICOSAHEDRON = 0, SPHERE, CUBE, COORDINATE_SYSTEM, BUNNY, NUM_PRIMITIVES };
+  enum PrimitiveType { ICOSAHEDRON = 0, SPHERE, CUBE, GRID, COORDINATE_SYSTEM, BUNNY, NUM_PRIMITIVES };
 
   static Primitives *instance() {
     if (instance_ == nullptr) {

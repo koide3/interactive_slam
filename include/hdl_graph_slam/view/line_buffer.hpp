@@ -31,7 +31,7 @@ public:
     shader.set_uniform("color_mode", 2);
     shader.set_uniform("model_matrix", Eigen::Matrix4f::Identity().eval());
 
-    glk::Lines lines(vertices, colors, infos);
+    glk::Lines lines(0.1f, vertices, colors, infos);
     lines.draw(shader);
   }
 

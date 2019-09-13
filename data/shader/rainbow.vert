@@ -11,6 +11,7 @@ uniform vec2 z_range;
 uniform ivec4 info_values;
 
 in vec3 vert_position;
+in vec3 vert_direction;     // line direction
 in vec4 vert_color;
 in ivec4 vert_info;
 

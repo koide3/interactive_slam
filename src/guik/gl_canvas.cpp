@@ -12,6 +12,9 @@
 
 #include <guik/camera_control.hpp>
 
+#include <GL/gl3w.h>
+#include <GL/gl.h>
+
 namespace guik {
 
 /**
@@ -80,6 +83,9 @@ void GLCanvas::bind() {
   shader->set_uniform("inv_view_matrix", view_matrix.inverse().eval());
   shader->set_uniform("projection_matrix", projection_matrix);
   shader->set_uniform("z_range", Eigen::Vector2f(min_z, max_z));
+
+  shader->set_uniform("line_mode", 0);
+  shader->set_uniform("color_mode", 0);
 
   glEnable(GL_DEPTH_TEST);
 }
