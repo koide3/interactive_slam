@@ -47,7 +47,8 @@ const glk::Drawable& Primitives::primitive(PrimitiveType type) {
         meshes[type].reset(new glk::Mesh(ply.vertices, ply.normals, ply.indices));
       } break;
       case COORDINATE_SYSTEM: {
-        meshes[type].reset(new glk::CoordinateSystem());
+        glk::CoordinateSystem coord;
+        meshes[type].reset(new glk::Lines(0.01f, coord.vertices, coord.colors));
       } break;
     }
   }

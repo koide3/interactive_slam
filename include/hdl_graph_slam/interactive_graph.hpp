@@ -22,7 +22,7 @@ public:
 
   bool load_map_data(const std::string& directory);
 
-  g2o::EdgeSE3* add_edge(const KeyFrame::Ptr& key1, const KeyFrame::Ptr& key2, const Eigen::Isometry3d& relative_pose);
+  g2o::EdgeSE3* add_edge(const KeyFrame::Ptr& key1, const KeyFrame::Ptr& key2, const Eigen::Isometry3d& relative_pose, const std::string& robust_kernel="NONE", double robust_kernel_delta=0.1);
 
   void optimize();
 

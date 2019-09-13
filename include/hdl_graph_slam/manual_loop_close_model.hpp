@@ -1,5 +1,5 @@
-#ifndef LOOP_CLOSE_MODAL_HPP
-#define LOOP_CLOSE_MODAL_HPP
+#ifndef MANUAL_LOOP_CLOSE_MODAL_HPP
+#define MANUAL_LOOP_CLOSE_MODAL_HPP
 
 #include <memory>
 #include <boost/optional.hpp>
@@ -11,12 +11,12 @@
 
 namespace hdl_graph_slam {
 
-class LoopCloseModal {
+class ManualLoopCloseModal {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  LoopCloseModal(InteractiveGraphView& graph, const std::string& data_directory);
-  ~LoopCloseModal();
+  ManualLoopCloseModal(InteractiveGraphView& graph, const std::string& data_directory);
+  ~ManualLoopCloseModal();
 
   bool set_begin_keyframe(int keyframe_id);
 
@@ -58,7 +58,6 @@ private:
   float fpfh_similarity_threshold;
   float fpfh_max_correspondence_distance;
   float fpfh_inlier_fraction;
-
   int scan_matching_method;
   float scan_matching_resolution;
 };

@@ -1,6 +1,7 @@
 #ifndef HDL_GRAPH_SLAM_INTERACTIVE_GRAPH_VIEW_HPP
 #define HDL_GRAPH_SLAM_INTERACTIVE_GRAPH_VIEW_HPP
 
+#include <mutex>
 #include <unordered_map>
 #include <glk/glsl_shader.hpp>
 
@@ -21,15 +22,21 @@ public:
   virtual ~InteractiveGraphView() {}
 
   void update_view() {
+    bool keyframe_inserted = false;
     for(const auto& key_item : keyframes) {
       auto& keyframe = key_item.second;
       auto found = keyframes_view_map.find(keyframe);
       if(found == keyframes_view_map.end()) {
+        keyframe_inserted = true;
         keyframes_view.push_back(std::make_shared<KeyFrameView>(keyframe));
         keyframes_view_map[keyframe] = keyframes_view.back();
 
         drawables.push_back(keyframes_view.back());
       }
+    }
+
+    if(keyframe_inserted) {
+      std::sort(keyframes_view.begin(), keyframes_view.end(), [=](const KeyFrameView::Ptr& lhs, const KeyFrameView::Ptr& rhs) { return lhs->lock()->id() < rhs->lock()->id(); });
     }
 
     for(const auto& edge: graph->edges()) {
@@ -62,6 +69,7 @@ public:
   }
 
 public:
+  std::mutex optimization_mutex;
   std::unique_ptr<LineBuffer> line_buffer;
 
   std::vector<KeyFrameView::Ptr> keyframes_view;

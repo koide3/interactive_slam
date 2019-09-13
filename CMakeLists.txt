@@ -85,7 +85,8 @@ add_library(guik STATIC
 add_executable(interactive_map_correction
   src/interactive_map_correction.cpp
   src/hdl_graph_slam/interactive_graph.cpp
-  src/hdl_graph_slam/loop_close_modal.cpp
+  src/hdl_graph_slam/manual_loop_close_modal.cpp
+  src/hdl_graph_slam/automatic_loop_close_window.cpp
   src/hdl_graph_slam/view/edge_view.cpp
 )
 target_link_libraries(interactive_map_correction

@@ -17,8 +17,11 @@ const std::vector<Eigen::Vector4i, Eigen::aligned_allocator<Eigen::Vector4i>>& i
 
   std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>> vertices_ext(vertices.size() * 4);
   for(int i=0; i<vertices.size(); i+=2) {
-    Eigen::Vector3f x = Eigen::Vector3f::UnitZ().cross(vertices[i+1] - vertices[i]).normalized();
-    Eigen::Vector3f y = x.cross(vertices[i + 1] - vertices[i]).normalized();
+    Eigen::Vector3f direction = vertices[i+1] - vertices[i];
+    Eigen::Vector3f axis = std::abs(direction.normalized().dot(Eigen::Vector3f::UnitZ())) < 0.9f ? Eigen::Vector3f::UnitZ() : Eigen::Vector3f::UnitX();
+
+    Eigen::Vector3f x = axis.cross(direction).normalized();
+    Eigen::Vector3f y = x.cross(direction).normalized();
 
     vertices_ext[i * 4] = vertices[i] - x * line_width;
     vertices_ext[i * 4 + 1] = vertices[i + 1] - x * line_width;
@@ -115,7 +118,6 @@ Lines::~Lines() {
 
 void Lines::draw(glk::GLSLShader& shader) const {
   GLint position_loc = shader.attrib("vert_position");
-  GLint direction_loc = shader.attrib("vert_direction");
   GLint color_loc = 0;
   GLint info_loc = 0;
 
@@ -144,7 +146,6 @@ void Lines::draw(glk::GLSLShader& shader) const {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
   glDisableVertexAttribArray(position_loc);
-  glDisableVertexAttribArray(direction_loc);
 
   if(cbo) {
     glDisableVertexAttribArray(color_loc);

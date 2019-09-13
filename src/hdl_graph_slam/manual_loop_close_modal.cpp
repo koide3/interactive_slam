@@ -1,4 +1,4 @@
-#include <hdl_graph_slam/loop_close_model.hpp>
+#include <hdl_graph_slam/manual_loop_close_model.hpp>
 
 #include <pclomp/ndt_omp.h>
 #include <pclomp/gicp_omp.h>
@@ -14,7 +14,7 @@
 
 namespace hdl_graph_slam {
 
-LoopCloseModal::LoopCloseModal(InteractiveGraphView& graph, const std::string& data_directory)
+ManualLoopCloseModal::ManualLoopCloseModal(InteractiveGraphView& graph, const std::string& data_directory)
 : graph(graph),
 fitness_score(0),
 registration_method(0),
@@ -24,7 +24,7 @@ fpfh_max_iterations(10000),
 fpfh_num_samples(3),
 fpfh_correspondence_randomness(5),
 fpfh_similarity_threshold(0.9f),
-fpfh_max_correspondence_distance(0.35f),
+fpfh_max_correspondence_distance(0.30f),
 fpfh_inlier_fraction(0.25f),
 scan_matching_method(0),
 scan_matching_resolution(2.0)
@@ -32,9 +32,9 @@ scan_matching_resolution(2.0)
   canvas.reset(new guik::GLCanvas(data_directory, Eigen::Vector2i(512, 512)));
 }
 
-LoopCloseModal::~LoopCloseModal() {}
+ManualLoopCloseModal::~ManualLoopCloseModal() {}
 
-bool LoopCloseModal::set_begin_keyframe(int keyframe_id) {
+bool ManualLoopCloseModal::set_begin_keyframe(int keyframe_id) {
   auto found = graph.keyframes.find(keyframe_id);
   if(found == graph.keyframes.end()) {
     return false;
@@ -45,7 +45,7 @@ bool LoopCloseModal::set_begin_keyframe(int keyframe_id) {
   return true;
 }
 
-bool LoopCloseModal::set_end_keyframe(int keyframe_id) {
+bool ManualLoopCloseModal::set_end_keyframe(int keyframe_id) {
   auto found = graph.keyframes.find(keyframe_id);
   if(found == graph.keyframes.end()) {
     return false;
@@ -58,9 +58,9 @@ bool LoopCloseModal::set_end_keyframe(int keyframe_id) {
   return true;
 }
 
-bool LoopCloseModal::run() {
+bool ManualLoopCloseModal::run() {
   bool close_window = false;
-  if(ImGui::BeginPopupModal("loop close", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+  if(ImGui::BeginPopupModal("manual loop close", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
     if(begin_keyframe == nullptr || end_keyframe == nullptr) {
       if(begin_keyframe == nullptr) {
         ImGui::Text("begin_keyframe has not been set");
@@ -76,6 +76,7 @@ bool LoopCloseModal::run() {
         canvas->mouse_control();
       }
 
+      draw_canvas();
       ImGui::Image((void*)canvas->frame_buffer->color().id(), ImVec2(512, 512), ImVec2(0, 1), ImVec2(1, 0));
       ImGui::EndChild();
     }
@@ -171,11 +172,11 @@ bool LoopCloseModal::run() {
   return close_window;
 }
 
-void LoopCloseModal::update_fitness_score() {
+void ManualLoopCloseModal::update_fitness_score() {
     fitness_score = InformationMatrixCalculator::calc_fitness_score(begin_keyframe->lock()->cloud, end_keyframe->lock()->cloud, begin_keyframe_pose.inverse() * end_keyframe_pose, 1.0);
 }
 
-void LoopCloseModal::auto_align() {
+void ManualLoopCloseModal::auto_align() {
   if(ImGui::BeginPopupModal("auto align", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
     const char* items[] = {"FPFH"};
     ImGui::Combo("Method", &registration_method, items, IM_ARRAYSIZE(items));
@@ -250,7 +251,7 @@ void LoopCloseModal::auto_align() {
   }
 }
 
-void LoopCloseModal::scan_matching() {
+void ManualLoopCloseModal::scan_matching() {
   if(ImGui::BeginPopupModal("scan matching", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
     const char* items[] = {"NDT", "GICP", "ICP"};
     ImGui::Combo("Method", &scan_matching_method, items, IM_ARRAYSIZE(items));
@@ -296,11 +297,10 @@ void LoopCloseModal::scan_matching() {
   }
 }
 
-
-void LoopCloseModal::draw_gl(glk::GLSLShader& shader) {
+void ManualLoopCloseModal::draw_gl(glk::GLSLShader& shader) {
   shader.set_uniform("point_scale", 100.0f);
   if(begin_keyframe) {
-    begin_keyframe->draw(shader, Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f), begin_keyframe->lock()->estimate().matrix().cast<float>());
+    begin_keyframe->draw(shader, Eigen::Vector4f(0.0f, 0.0f, 1.0f, 1.0f), begin_keyframe->lock()->estimate().matrix().cast<float>());
   }
 
   if(end_keyframe) {
@@ -308,12 +308,14 @@ void LoopCloseModal::draw_gl(glk::GLSLShader& shader) {
   }
 }
 
-void LoopCloseModal::draw_canvas() {
+void ManualLoopCloseModal::draw_canvas() {
   if(!begin_keyframe || !end_keyframe) {
     return;
   }
+  glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
   canvas->bind();
+  canvas->shader->set_uniform("color_mode", 1);
   canvas->shader->set_uniform("point_scale", 100.0f);
 
   Eigen::Isometry3d relative = begin_keyframe_pose.inverse() * end_keyframe_pose;
@@ -324,5 +326,7 @@ void LoopCloseModal::draw_canvas() {
   canvas->shader->set_uniform("material_color", Eigen::Vector4f(1.0f, 1.0f, 1.0f, 1.0f));
   glk::Primitives::instance()->primitive(glk::Primitives::COORDINATE_SYSTEM).draw(*canvas->shader);
   canvas->unbind();
+
+  glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
 }
 }

@@ -7,8 +7,9 @@
 #include <guik/camera_control.hpp>
 #include <guik/imgui_application.hpp>
 
-#include <hdl_graph_slam/loop_close_model.hpp>
 #include <hdl_graph_slam/parameter_server.hpp>
+#include <hdl_graph_slam/manual_loop_close_model.hpp>
+#include <hdl_graph_slam/automatic_loop_close_window.hpp>
 #include <hdl_graph_slam/view/interactive_graph_view.hpp>
 
 #include <ros/package.h>
@@ -35,9 +36,10 @@ public:
     }
 
     graph.reset(new InteractiveGraphView());
-    loop_close_modal.reset(new LoopCloseModal(*graph, data_directory));
+    manual_loop_close_modal.reset(new ManualLoopCloseModal(*graph, data_directory));
+    automatic_loop_close_window.reset(new AutomaticLoopCloseWindow(*graph, data_directory));
 
-    return true;
+        return true;
   }
 
   virtual void draw_ui() override {
@@ -47,6 +49,8 @@ public:
     ImGuiIO& io = ImGui::GetIO();
 
     {
+      std::lock_guard<std::mutex> lock(graph->optimization_mutex);
+
       ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground;
       ImGui::Begin("##stats", nullptr, flags);
       ImGui::Text("Graph");
@@ -62,6 +66,8 @@ public:
 
     main_canvas->draw_ui();
 
+    automatic_loop_close_window->draw_ui();
+
     context_menu();
     mouse_control();
   }
@@ -70,26 +76,28 @@ public:
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
     main_canvas->bind();
-    main_canvas->shader->set_uniform("point_scale", 50.0f);
+    main_canvas->shader->set_uniform("color_mode", 2);
+    main_canvas->shader->set_uniform("model_matrix", (Eigen::UniformScaling<float>(3.0f) * Eigen::Isometry3f::Identity()).matrix());
 
     const auto& coord = glk::Primitives::instance()->primitive(glk::Primitives::COORDINATE_SYSTEM);
-    main_canvas->shader->set_uniform("model_matrix", (Eigen::UniformScaling<float>(3.0f) * Eigen::Isometry3f::Identity()).matrix());
-    glLineWidth(5.0f);
     coord.draw(*main_canvas->shader);
 
-    const auto& grid = glk::Primitives::instance()->primitive(glk::Primitives::GRID);
-    main_canvas->shader->set_uniform("model_matrix", (Eigen::Translation3f(Eigen::Vector3f::UnitZ() * -0.02) * Eigen::Isometry3f::Identity()).matrix());
     main_canvas->shader->set_uniform("color_mode", 1);
+    main_canvas->shader->set_uniform("model_matrix", (Eigen::Translation3f(Eigen::Vector3f::UnitZ() * -0.02) * Eigen::Isometry3f::Identity()).matrix());
     main_canvas->shader->set_uniform("material_color", Eigen::Vector4f(0.8f, 0.8f, 0.8f, 1.0f));
+    const auto& grid = glk::Primitives::instance()->primitive(glk::Primitives::GRID);
     grid.draw(*main_canvas->shader);
 
-    loop_close_modal->draw_gl(*main_canvas->shader);
-    graph->draw(*main_canvas->shader);
+    main_canvas->shader->set_uniform("point_scale", 50.0f);
+    {
+      std::lock_guard<std::mutex> lock(graph->optimization_mutex);
+      graph->draw(*main_canvas->shader);
+    }
+    manual_loop_close_modal->draw_gl(*main_canvas->shader);
+    automatic_loop_close_window->draw_gl(*main_canvas->shader);
 
     main_canvas->unbind();
     main_canvas->render_to_screen();
-
-    loop_close_modal->draw_canvas();
 
     glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
   }
@@ -123,6 +131,10 @@ private:
     }
 
     if(ImGui::BeginMenu("Graph")) {
+        if(ImGui::MenuItem("Automatic loop detection")) {
+          automatic_loop_close_window->show();
+        }
+
         if(ImGui::MenuItem("Optimize")) {
           graph->optimize();
         }
@@ -192,7 +204,6 @@ private:
     if(ImGui::BeginPopupContextVoid("context menu")) {
       auto mouse_pos = ImGui::GetMousePos();
       Eigen::Vector4i picked_info = main_canvas->pick_info(right_clicked_pos);
-      std::cout << picked_info.transpose() << std::endl;
       int picked_type = picked_info[0];
       int picked_id = picked_info[1];
 
@@ -210,16 +221,16 @@ private:
 
         ImGui::Text("\nloop close");
         if(ImGui::Button("loop begin")) {
-          loop_close_modal->set_begin_keyframe(picked_id);
+          manual_loop_close_modal->set_begin_keyframe(picked_id);
           ImGui::CloseCurrentPopup();
         }
         if(ImGui::Button("loop end")) {
-          loop_close_modal->set_end_keyframe(picked_id);
-          ImGui::OpenPopup("loop close");
+          manual_loop_close_modal->set_end_keyframe(picked_id);
+          ImGui::OpenPopup("manual loop close");
         }
       }
 
-      if(loop_close_modal->run()) {
+      if(manual_loop_close_modal->run()) {
         ImGui::CloseCurrentPopup();
       }
       ImGui::EndPopup();
@@ -228,7 +239,8 @@ private:
 
 private:
   Eigen::Vector2i right_clicked_pos;
-  std::unique_ptr<LoopCloseModal> loop_close_modal;
+  std::unique_ptr<ManualLoopCloseModal> manual_loop_close_modal;
+  std::unique_ptr<AutomaticLoopCloseWindow> automatic_loop_close_window;
 
   std::unique_ptr<guik::GLCanvas> main_canvas;
 
