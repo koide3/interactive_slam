@@ -18,6 +18,14 @@ LoopCloseModal::LoopCloseModal(InteractiveGraphView& graph, const std::string& d
 : graph(graph),
 fitness_score(0),
 registration_method(0),
+fpfh_normal_estimation_radius(0.25f),
+fpfh_search_radius(0.3f),
+fpfh_max_iterations(10000),
+fpfh_num_samples(3),
+fpfh_correspondence_randomness(5),
+fpfh_similarity_threshold(0.9f),
+fpfh_max_correspondence_distance(0.35f),
+fpfh_inlier_fraction(0.25f),
 scan_matching_method(0),
 scan_matching_resolution(2.0)
 {
@@ -172,6 +180,18 @@ void LoopCloseModal::auto_align() {
     const char* items[] = {"FPFH"};
     ImGui::Combo("Method", &registration_method, items, IM_ARRAYSIZE(items));
 
+    // FPFH
+    if(registration_method == 0) {
+      ImGui::DragFloat("Normal estimation radius", &fpfh_normal_estimation_radius, 0.01f, 0.01f, 5.0f);
+      ImGui::DragFloat("Search radius", &fpfh_search_radius, 0.01f, 0.01f, 5.0f);
+      ImGui::DragInt("Max iterations", &fpfh_max_iterations, 1000, 1000, 100000);
+      ImGui::DragInt("Num samples", &fpfh_num_samples, 1, 1, 100);
+      ImGui::DragInt("Correspondence randomness", &fpfh_correspondence_randomness, 1, 1, 100);
+      ImGui::DragFloat("Similarity threshold", &fpfh_similarity_threshold, 0.01f, 0.01f, 1.0f);
+      ImGui::DragFloat("Max correspondence distance", &fpfh_max_correspondence_distance, 0.01f, 0.01f, 1.0f);
+      ImGui::DragFloat("Inlier fraction", &fpfh_inlier_fraction, 0.01f, 0.01f, 1.0f);
+    }
+
     if(ImGui::Button("OK")) {
       using FeatureT = pcl::FPFHSignature33;
 
@@ -184,14 +204,14 @@ void LoopCloseModal::auto_align() {
       pcl::copyPointCloud(*end_keyframe->lock()->cloud, *end_keyframe_cloud);
 
       pcl::NormalEstimationOMP<pcl::PointNormal, pcl::PointNormal> nest;
-      nest.setRadiusSearch(0.1);
+      nest.setRadiusSearch(fpfh_normal_estimation_radius);
       nest.setInputCloud(begin_keyframe_cloud);
       nest.compute(*begin_keyframe_cloud);
       nest.setInputCloud(end_keyframe_cloud);
       nest.compute(*end_keyframe_cloud);
 
       pcl::FPFHEstimation<pcl::PointNormal, pcl::PointNormal, pcl::FPFHSignature33> fest;
-      fest.setRadiusSearch(0.25);
+      fest.setRadiusSearch(fpfh_search_radius);
       fest.setInputCloud(begin_keyframe_cloud);
       fest.setInputNormals(begin_keyframe_cloud);
       fest.compute(*begin_keyframe_features);
@@ -205,12 +225,12 @@ void LoopCloseModal::auto_align() {
       align.setInputTarget(begin_keyframe_cloud);
       align.setTargetFeatures(begin_keyframe_features);
 
-      align.setMaximumIterations(50000);
-      align.setNumberOfSamples(3);
-      align.setCorrespondenceRandomness(5);
-      align.setSimilarityThreshold(0.9f);
-      align.setMaxCorrespondenceDistance(0.25f);
-      align.setInlierFraction(0.25f);
+      align.setMaximumIterations(fpfh_max_iterations);
+      align.setNumberOfSamples(fpfh_num_samples);
+      align.setCorrespondenceRandomness(fpfh_correspondence_randomness);
+      align.setSimilarityThreshold(fpfh_similarity_threshold);
+      align.setMaxCorrespondenceDistance(fpfh_max_iterations);
+      align.setInlierFraction(fpfh_inlier_fraction);
 
       pcl::PointCloud<pcl::PointNormal>::Ptr aligned(new pcl::PointCloud<pcl::PointNormal>());
       align.align(*aligned);

@@ -50,6 +50,15 @@ private:
 
   int registration_method;
 
+  float fpfh_normal_estimation_radius;
+  float fpfh_search_radius;
+  int fpfh_max_iterations;
+  int fpfh_num_samples;
+  int fpfh_correspondence_randomness;
+  float fpfh_similarity_threshold;
+  float fpfh_max_correspondence_distance;
+  float fpfh_inlier_fraction;
+
   int scan_matching_method;
   float scan_matching_resolution;
 };
