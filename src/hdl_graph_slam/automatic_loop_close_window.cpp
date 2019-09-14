@@ -1,5 +1,6 @@
 #include <hdl_graph_slam/automatic_loop_close_window.hpp>
 
+#include <unordered_set>
 #include <g2o/core/robust_kernel_factory.h>
 #include <g2o/types/slam3d/edge_se3.h>
 #include <g2o/types/slam3d/vertex_se3.h>
@@ -18,10 +19,11 @@ scan_matching_method(0),
 scan_matching_resolution(2.0f),
 fitness_score_thresh(0.3f),
 fitness_score_max_range(2.0f),
+search_method(0),
 distance_thresh(10.0f),
 accum_distance_thresh(15.0f),
-robust_kernel(1),
-robust_kernel_delta(0.1)
+robust_kernel(0),
+robust_kernel_delta(0.05f)
 {}
 
 AutomaticLoopCloseWindow::~AutomaticLoopCloseWindow() {
@@ -41,11 +43,13 @@ void AutomaticLoopCloseWindow::draw_ui() {
 
   ImGui::Text("Scan matching");
   const char* methods[] = { "NDT" };
-  ImGui::Combo("method", &scan_matching_method, methods, IM_ARRAYSIZE(methods));
+  ImGui::Combo("Method", &scan_matching_method, methods, IM_ARRAYSIZE(methods));
   ImGui::DragFloat("Resolution", &scan_matching_resolution, 0.01f, 0.01f, 20.0f);
   ImGui::DragFloat("Fitness score thresh", &fitness_score_thresh, 0.01f, 0.01f, 10.0f);
 
   ImGui::Text("Loop detection");
+  const char* search_methods[] = {"RANDOM", "SEQUENTIAL"};
+  ImGui::Combo("Search method", &search_method, search_methods, IM_ARRAYSIZE(search_methods));
   ImGui::DragFloat("Distance thresh", &distance_thresh, 0.01f, 0.01f, 100.0f);
   ImGui::DragFloat("Accum distance thresh", &accum_distance_thresh, 0.01f, 0.01f, 100.0f);
 
@@ -66,13 +70,6 @@ void AutomaticLoopCloseWindow::draw_ui() {
     if(running) {
       running = false;
       loop_detection_thread.join();
-    }
-  }
-
-  if(running) {
-    loop_detection_source ++;
-    if(loop_detection_source == graph.keyframes_view.size()) {
-      loop_detection_source = 0;
     }
   }
 
@@ -123,9 +120,11 @@ void AutomaticLoopCloseWindow::loop_detection() {
     }
 
     loop_detection_source++;
-    if(loop_detection_source == graph.keyframes_view.size()) {
-      loop_detection_source = 0;
+    if(search_method == 0) {
+      loop_detection_source = rand() % graph.keyframes_view.size();
     }
+
+    loop_detection_source = loop_detection_source % graph.keyframes_view.size();
   }
 }
 
@@ -166,9 +165,24 @@ std::vector<KeyFrameView::Ptr> AutomaticLoopCloseWindow::find_loop_candidates(co
     }
   }
 
+  std::unordered_set<long> excluded_edges;
+  for (auto& edge_ : keyframe->lock()->node->edges()) {
+    g2o::EdgeSE3* edge = dynamic_cast<g2o::EdgeSE3*>(edge_);
+    if (edge == nullptr) {
+      continue;
+    }
+
+    excluded_edges.insert(edge->vertices()[0]->id());
+    excluded_edges.insert(edge->vertices()[1]->id());
+  }
+
   Eigen::Vector3d keyframe_pos = keyframe->lock()->node->estimate().translation();
   std::vector<KeyFrameView::Ptr> loop_candidates;
   for(const auto& candidate: graph.keyframes_view) {
+    if(excluded_edges.find(candidate->lock()->id()) != excluded_edges.end()) {
+      continue;
+    }
+
     auto found = accum_distances.find(candidate->lock()->id());
     if(found == accum_distances.end()) {
       continue;

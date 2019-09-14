@@ -1,5 +1,7 @@
 #include <guik/gl_canvas.hpp>
 
+#include <iostream>
+
 #include <imgui.h>
 
 #include <glm/glm.hpp>
@@ -23,7 +25,7 @@ namespace guik {
  * @param data_directory
  * @param size
  */
-GLCanvas::GLCanvas(const std::string& data_directory, const Eigen::Vector2i& size) : size(size), min_z(-2.0f), max_z(5.0f) {
+GLCanvas::GLCanvas(const std::string& data_directory, const Eigen::Vector2i& size) : size(size), min_z(-1.5f), max_z(5.0f) {
   frame_buffer.reset(new glk::FrameBuffer(size));
   frame_buffer->add_color_buffer(GL_RGBA32I, GL_RGBA_INTEGER, GL_INT);
 
@@ -40,6 +42,7 @@ GLCanvas::GLCanvas(const std::string& data_directory, const Eigen::Vector2i& siz
   shader->use();
 
   camera_control.reset(new guik::ArcCameraControl());
+  projection_control.reset(new guik::ProjectionControl(size));
   texture_renderer.reset(new glk::TextureRenderer(data_directory));
 }
 
@@ -76,8 +79,7 @@ void GLCanvas::bind() {
   shader->use();
 
   Eigen::Matrix4f view_matrix = camera_control->view_matrix();
-  glm::mat4 proj = glm::perspective<float>(120.0, size[0] / static_cast<float>(size[1]), 1.0, 500.0);
-  Eigen::Matrix4f projection_matrix = Eigen::Map<Eigen::Matrix4f>(glm::value_ptr(proj));
+  Eigen::Matrix4f projection_matrix = projection_control->projection_matrix();
 
   shader->set_uniform("view_matrix", view_matrix);
   shader->set_uniform("projection_matrix", projection_matrix);
@@ -212,15 +214,16 @@ float GLCanvas::pick_depth(const Eigen::Vector2i& p, int window) const {
  */
 Eigen::Vector3f GLCanvas::unproject(const Eigen::Vector2i& p, float depth) const {
   Eigen::Matrix4f view_matrix = camera_control->view_matrix();
-  glm::mat4 proj = glm::perspective<float>(120.0, 1.0, 1.0, 500.0);
-  Eigen::Matrix4f projection_matrix = Eigen::Map<Eigen::Matrix4f>(glm::value_ptr(proj));
+  glm::mat4 view = glm::make_mat4(view_matrix.data());
 
-  Eigen::Matrix4f vp = projection_matrix * view_matrix;
+  Eigen::Matrix4f projection_matrix = projection_control->projection_matrix();
+  glm::mat4 projection = glm::make_mat4(projection_matrix.data());
 
-  Eigen::Vector2f p_(static_cast<float>(p[0]) / size[0], static_cast<float>(p[1]) / size[1]);
-  Eigen::Vector4f unprojected = vp.inverse() * Eigen::Vector4f(p_[0], 1.0f - p_[1], depth, 1.0f);
+  glm::vec4 viewport = glm::vec4(0, 0, size[0], size[1]);
+  glm::vec3 wincoord = glm::vec3(p[0], size[1] - p[1], depth);
+  glm::vec3 objcoord = glm::unProject(wincoord, view, projection, viewport);
 
-  return unprojected.head<3>();
+  return Eigen::Vector3f(objcoord.x, objcoord.y, objcoord.z);
 }
 
 void GLCanvas::draw_ui() {
@@ -228,6 +231,12 @@ void GLCanvas::draw_ui() {
   ImGui::DragFloat("min_z", &min_z, 0.1f);
   ImGui::DragFloat("max_z", &max_z, 0.1f);
   ImGui::End();
+
+  projection_control->draw_ui();
+}
+
+void GLCanvas::show_projection_setting() {
+  projection_control->show();
 }
 
 }  // namespace guik

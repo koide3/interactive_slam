@@ -7,6 +7,11 @@
 #include <g2o/types/slam3d/edge_se3.h>
 #include <g2o/core/sparse_optimizer.h>
 
+#include <pcl/io/pcd_io.h>
+#include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
+#include <pcl/common/transforms.h>
+
 #include <hdl_graph_slam/graph_slam.hpp>
 #include <hdl_graph_slam/information_matrix_calculator.hpp>
 
@@ -81,5 +86,21 @@ namespace hdl_graph_slam {
 
     auto t2 = std::chrono::high_resolution_clock::now();
     elapsed_time_msec = std::chrono::duration_cast<std::chrono::seconds>(t2 - t1).count();
+  }
+
+  bool InteractiveGraph::save_pointcloud(const std::string& filename) {
+    pcl::PointCloud<pcl::PointXYZI>::Ptr accumulated(new pcl::PointCloud<pcl::PointXYZI>());
+    for(const auto& keyframe: keyframes) {
+      pcl::PointCloud<pcl::PointXYZI>::Ptr transformed(new pcl::PointCloud<pcl::PointXYZI>());
+      pcl::transformPointCloud(*keyframe.second->cloud, *transformed, keyframe.second->node->estimate().cast<float>());
+
+      std::copy(transformed->begin(), transformed->end(), std::back_inserter(accumulated->points));
+    }
+
+    accumulated->is_dense = false;
+    accumulated->width = accumulated->size();
+    accumulated->height = 1;
+
+    return pcl::io::savePCDFileBinary(filename, *accumulated);
   }
 }

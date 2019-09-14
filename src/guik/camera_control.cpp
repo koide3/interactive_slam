@@ -45,9 +45,9 @@ void ArcCameraControl::drag(const Eigen::Vector2i& p, int button) {
 
 void ArcCameraControl::scroll(const Eigen::Vector2f& rel) {
   if (rel[0] > 0) {
-    distance = distance * 0.8f;
+    distance = distance * 0.9f;
   } else if (rel[0] < 0) {
-    distance = distance * 1.2f;
+    distance = distance * 1.1f;
   }
 
   distance = std::max(0.1, distance);

@@ -127,6 +127,10 @@ private:
     }
 
     if(ImGui::BeginMenu("View")) {
+      if (ImGui::MenuItem("Projection setting")) {
+        main_canvas->show_projection_setting();
+      }
+
       ImGui::EndMenu();
     }
 
@@ -185,7 +189,9 @@ private:
     }
 
     auto result = dialog->result();
-    std::cout << result << std::endl;
+
+    std::lock_guard<std::mutex> lock(graph->optimization_mutex);
+    graph->save_pointcloud(result);
   }
 
   void mouse_control() {
@@ -243,7 +249,6 @@ private:
   std::unique_ptr<AutomaticLoopCloseWindow> automatic_loop_close_window;
 
   std::unique_ptr<guik::GLCanvas> main_canvas;
-
   std::unique_ptr<InteractiveGraphView> graph;
 };
 

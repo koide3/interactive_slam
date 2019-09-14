@@ -8,6 +8,7 @@
 #include <glk/texture_renderer.hpp>
 
 #include <guik/camera_control.hpp>
+#include <guik/projection_control.hpp>
 
 namespace guik {
 
@@ -30,6 +31,7 @@ public:
   Eigen::Vector3f unproject(const Eigen::Vector2i& p, float depth) const;
 
   void draw_ui();
+  void show_projection_setting();
 
 public:
   Eigen::Vector2i size;
@@ -38,6 +40,7 @@ public:
   std::unique_ptr<glk::TextureRenderer> texture_renderer;
 
   std::unique_ptr<guik::CameraControl> camera_control;
+  std::unique_ptr<guik::ProjectionControl> projection_control;
 
 private:
   float min_z;

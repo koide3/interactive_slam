@@ -2,6 +2,7 @@
 #define MANUAL_LOOP_CLOSE_MODAL_HPP
 
 #include <memory>
+#include <future>
 #include <boost/optional.hpp>
 
 #include <imgui.h>
@@ -47,6 +48,9 @@ private:
   Eigen::Isometry3d end_keyframe_pose;
 
   std::unique_ptr<guik::GLCanvas> canvas;
+
+  std::atomic_int auto_alignment_progress;
+  std::future<std::shared_ptr<Eigen::Isometry3d>> auto_alignment_result;
 
   int registration_method;
 

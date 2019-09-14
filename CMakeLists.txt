@@ -78,6 +78,7 @@ add_library(guik STATIC
   src/guik/gl_canvas.cpp
   src/guik/model_control.cpp
   src/guik/camera_control.cpp
+  src/guik/projection_control.cpp
   src/guik/imgui_application.cpp
 )
 

@@ -19,11 +19,11 @@ ManualLoopCloseModal::ManualLoopCloseModal(InteractiveGraphView& graph, const st
 fitness_score(0),
 registration_method(0),
 fpfh_normal_estimation_radius(0.25f),
-fpfh_search_radius(0.3f),
-fpfh_max_iterations(10000),
+fpfh_search_radius(0.5f),
+fpfh_max_iterations(20000),
 fpfh_num_samples(3),
 fpfh_correspondence_randomness(5),
-fpfh_similarity_threshold(0.9f),
+fpfh_similarity_threshold(0.85f),
 fpfh_max_correspondence_distance(0.30f),
 fpfh_inlier_fraction(0.25f),
 scan_matching_method(0),
@@ -194,57 +194,90 @@ void ManualLoopCloseModal::auto_align() {
     }
 
     if(ImGui::Button("OK")) {
-      using FeatureT = pcl::FPFHSignature33;
+      auto_alignment_progress = 0;
+      auto_alignment_result = std::async(std::launch::async, [&]() {
+        using FeatureT = pcl::FPFHSignature33;
 
-      pcl::PointCloud<pcl::PointNormal>::Ptr begin_keyframe_cloud(new pcl::PointCloud<pcl::PointNormal>());
-      pcl::PointCloud<pcl::PointNormal>::Ptr end_keyframe_cloud(new pcl::PointCloud<pcl::PointNormal>());
-      pcl::PointCloud<FeatureT>::Ptr begin_keyframe_features(new pcl::PointCloud<FeatureT>());
-      pcl::PointCloud<FeatureT>::Ptr end_keyframe_features(new pcl::PointCloud<FeatureT>());
+        auto_alignment_progress = 1;
+        pcl::PointCloud<pcl::PointNormal>::Ptr begin_keyframe_cloud(new pcl::PointCloud<pcl::PointNormal>());
+        pcl::PointCloud<pcl::PointNormal>::Ptr end_keyframe_cloud(new pcl::PointCloud<pcl::PointNormal>());
+        pcl::PointCloud<FeatureT>::Ptr begin_keyframe_features(new pcl::PointCloud<FeatureT>());
+        pcl::PointCloud<FeatureT>::Ptr end_keyframe_features(new pcl::PointCloud<FeatureT>());
 
-      pcl::copyPointCloud(*begin_keyframe->lock()->cloud, *begin_keyframe_cloud);
-      pcl::copyPointCloud(*end_keyframe->lock()->cloud, *end_keyframe_cloud);
+        pcl::copyPointCloud(*begin_keyframe->lock()->cloud, *begin_keyframe_cloud);
+        pcl::copyPointCloud(*end_keyframe->lock()->cloud, *end_keyframe_cloud);
 
-      pcl::NormalEstimationOMP<pcl::PointNormal, pcl::PointNormal> nest;
-      nest.setRadiusSearch(fpfh_normal_estimation_radius);
-      nest.setInputCloud(begin_keyframe_cloud);
-      nest.compute(*begin_keyframe_cloud);
-      nest.setInputCloud(end_keyframe_cloud);
-      nest.compute(*end_keyframe_cloud);
+        auto_alignment_progress = 2;
+        pcl::NormalEstimationOMP<pcl::PointNormal, pcl::PointNormal> nest;
+        nest.setRadiusSearch(fpfh_normal_estimation_radius);
+        nest.setInputCloud(begin_keyframe_cloud);
+        nest.compute(*begin_keyframe_cloud);
+        nest.setInputCloud(end_keyframe_cloud);
+        nest.compute(*end_keyframe_cloud);
 
-      pcl::FPFHEstimation<pcl::PointNormal, pcl::PointNormal, pcl::FPFHSignature33> fest;
-      fest.setRadiusSearch(fpfh_search_radius);
-      fest.setInputCloud(begin_keyframe_cloud);
-      fest.setInputNormals(begin_keyframe_cloud);
-      fest.compute(*begin_keyframe_features);
-      fest.setInputCloud(end_keyframe_cloud);
-      fest.setInputNormals(end_keyframe_cloud);
-      fest.compute(*end_keyframe_features);
+        auto_alignment_progress = 3;
+        pcl::FPFHEstimation<pcl::PointNormal, pcl::PointNormal, pcl::FPFHSignature33> fest;
+        fest.setRadiusSearch(fpfh_search_radius);
+        fest.setInputCloud(begin_keyframe_cloud);
+        fest.setInputNormals(begin_keyframe_cloud);
+        fest.compute(*begin_keyframe_features);
+        fest.setInputCloud(end_keyframe_cloud);
+        fest.setInputNormals(end_keyframe_cloud);
+        fest.compute(*end_keyframe_features);
 
-      pcl::SampleConsensusPrerejective<pcl::PointNormal, pcl::PointNormal, pcl::FPFHSignature33> align;
-      align.setInputSource(end_keyframe_cloud);
-      align.setSourceFeatures(end_keyframe_features);
-      align.setInputTarget(begin_keyframe_cloud);
-      align.setTargetFeatures(begin_keyframe_features);
+        auto_alignment_progress = 4;
+        pcl::SampleConsensusPrerejective<pcl::PointNormal, pcl::PointNormal, pcl::FPFHSignature33> align;
+        align.setInputSource(end_keyframe_cloud);
+        align.setSourceFeatures(end_keyframe_features);
+        align.setInputTarget(begin_keyframe_cloud);
+        align.setTargetFeatures(begin_keyframe_features);
 
-      align.setMaximumIterations(fpfh_max_iterations);
-      align.setNumberOfSamples(fpfh_num_samples);
-      align.setCorrespondenceRandomness(fpfh_correspondence_randomness);
-      align.setSimilarityThreshold(fpfh_similarity_threshold);
-      align.setMaxCorrespondenceDistance(fpfh_max_iterations);
-      align.setInlierFraction(fpfh_inlier_fraction);
+        align.setMaximumIterations(fpfh_max_iterations);
+        align.setNumberOfSamples(fpfh_num_samples);
+        align.setCorrespondenceRandomness(fpfh_correspondence_randomness);
+        align.setSimilarityThreshold(fpfh_similarity_threshold);
+        align.setMaxCorrespondenceDistance(fpfh_max_iterations);
+        align.setInlierFraction(fpfh_inlier_fraction);
 
-      pcl::PointCloud<pcl::PointNormal>::Ptr aligned(new pcl::PointCloud<pcl::PointNormal>());
-      align.align(*aligned);
+        pcl::PointCloud<pcl::PointNormal>::Ptr aligned(new pcl::PointCloud<pcl::PointNormal>());
+        align.align(*aligned);
 
-      align.getFinalTransformation();
+        Eigen::Isometry3d relative = Eigen::Isometry3d::Identity();
+        relative.matrix() = align.getFinalTransformation().cast<double>();
+        auto_alignment_progress = 5;
 
-      end_keyframe_pose = begin_keyframe_pose * align.getFinalTransformation().cast<double>();
-      update_fitness_score();
-      ImGui::CloseCurrentPopup();
+        usleep(500000);
+
+        return std::make_shared<Eigen::Isometry3d>(relative);
+      });
+
+      ImGui::OpenPopup("progress");
+    }
+
+    bool close_parent = false;
+    if (ImGui::BeginPopupModal("progress", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar)) {
+      std::future_status result = auto_alignment_result.wait_for(std::chrono::milliseconds(100));
+      const char* status_texts[] = {"Initializing", "Copy point clouds", "Normal estimation", "Feature extraction", "Sample consensus", "Ready"};
+      ImGui::Text("%c %s", "|/-\\"[(int)(ImGui::GetTime() / 0.05f) & 3], status_texts[auto_alignment_progress]);
+
+      float fraction = auto_alignment_progress / 5.0f;
+      ImGui::ProgressBar(fraction, ImVec2(128, 16));
+
+      if(result != std::future_status::timeout) {
+        close_parent = true;
+        end_keyframe_pose = begin_keyframe_pose * (*auto_alignment_result.get());
+        update_fitness_score();
+        ImGui::CloseCurrentPopup();
+      }
+      ImGui::EndPopup();
     }
 
     ImGui::SameLine();
-    if(ImGui::Button("Cancel")) {
+    if (ImGui::Button("Cancel")) {
+      close_parent = true;
+    }
+
+    if (close_parent) {
       ImGui::CloseCurrentPopup();
     }
     ImGui::EndPopup();
@@ -319,11 +352,11 @@ void ManualLoopCloseModal::draw_canvas() {
   canvas->shader->set_uniform("point_scale", 100.0f);
 
   Eigen::Isometry3d relative = begin_keyframe_pose.inverse() * end_keyframe_pose;
-  begin_keyframe->draw(*canvas->shader, Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f), Eigen::Matrix4f::Identity());
+  begin_keyframe->draw(*canvas->shader, Eigen::Vector4f(0.0f, 0.0f, 1.0f, 1.0f), Eigen::Matrix4f::Identity());
   end_keyframe->draw(*canvas->shader, Eigen::Vector4f(0.0f, 1.0f, 0.0f, 1.0f), relative.cast<float>().matrix());
 
+  canvas->shader->set_uniform("color_mode", 1);
   canvas->shader->set_uniform("model_matrix", (relative * Eigen::UniformScaling<double>(3.0)).cast<float>().matrix());
-  canvas->shader->set_uniform("material_color", Eigen::Vector4f(1.0f, 1.0f, 1.0f, 1.0f));
   glk::Primitives::instance()->primitive(glk::Primitives::COORDINATE_SYSTEM).draw(*canvas->shader);
   canvas->unbind();
 

@@ -26,6 +26,8 @@ public:
 
   void optimize();
 
+  bool save_pointcloud(const std::string& filename);
+
   using GraphSLAM::num_edges;
   using GraphSLAM::num_vertices;
 

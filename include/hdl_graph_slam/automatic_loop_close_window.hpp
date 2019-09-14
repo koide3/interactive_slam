@@ -49,6 +49,7 @@ private:
   float fitness_score_thresh;
   float fitness_score_max_range;
 
+  int search_method;
   float distance_thresh;
   float accum_distance_thresh;
 
