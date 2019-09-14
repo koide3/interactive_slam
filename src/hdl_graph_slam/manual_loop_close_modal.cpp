@@ -15,20 +15,19 @@
 namespace hdl_graph_slam {
 
 ManualLoopCloseModal::ManualLoopCloseModal(InteractiveGraphView& graph, const std::string& data_directory)
-: graph(graph),
-fitness_score(0),
-registration_method(0),
-fpfh_normal_estimation_radius(0.25f),
-fpfh_search_radius(0.5f),
-fpfh_max_iterations(20000),
-fpfh_num_samples(3),
-fpfh_correspondence_randomness(5),
-fpfh_similarity_threshold(0.85f),
-fpfh_max_correspondence_distance(0.30f),
-fpfh_inlier_fraction(0.25f),
-scan_matching_method(0),
-scan_matching_resolution(2.0)
-{
+    : graph(graph),
+      fitness_score(0),
+      registration_method(0),
+      fpfh_normal_estimation_radius(0.25f),
+      fpfh_search_radius(0.5f),
+      fpfh_max_iterations(20000),
+      fpfh_num_samples(3),
+      fpfh_correspondence_randomness(5),
+      fpfh_similarity_threshold(0.85f),
+      fpfh_max_correspondence_distance(0.30f),
+      fpfh_inlier_fraction(0.25f),
+      scan_matching_method(0),
+      scan_matching_resolution(2.0) {
   canvas.reset(new guik::GLCanvas(data_directory, Eigen::Vector2i(512, 512)));
 }
 
@@ -36,7 +35,7 @@ ManualLoopCloseModal::~ManualLoopCloseModal() {}
 
 bool ManualLoopCloseModal::set_begin_keyframe(int keyframe_id) {
   auto found = graph.keyframes.find(keyframe_id);
-  if(found == graph.keyframes.end()) {
+  if (found == graph.keyframes.end()) {
     return false;
   }
 
@@ -47,7 +46,7 @@ bool ManualLoopCloseModal::set_begin_keyframe(int keyframe_id) {
 
 bool ManualLoopCloseModal::set_end_keyframe(int keyframe_id) {
   auto found = graph.keyframes.find(keyframe_id);
-  if(found == graph.keyframes.end()) {
+  if (found == graph.keyframes.end()) {
     return false;
   }
 
@@ -60,19 +59,19 @@ bool ManualLoopCloseModal::set_end_keyframe(int keyframe_id) {
 
 bool ManualLoopCloseModal::run() {
   bool close_window = false;
-  if(ImGui::BeginPopupModal("manual loop close", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-    if(begin_keyframe == nullptr || end_keyframe == nullptr) {
-      if(begin_keyframe == nullptr) {
+  if (ImGui::BeginPopupModal("manual loop close", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+    if (begin_keyframe == nullptr || end_keyframe == nullptr) {
+      if (begin_keyframe == nullptr) {
         ImGui::Text("begin_keyframe has not been set");
       }
-      if(end_keyframe == nullptr) {
+      if (end_keyframe == nullptr) {
         ImGui::Text("begin_keyframe has not been set");
       }
     } else {
       // create OpenGL canvas
       ImGuiWindowFlags flags = ImGuiWindowFlags_ChildWindow | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoNavFocus;
       ImGui::BeginChild("canvas", ImVec2(512, 512), false, flags);
-      if(ImGui::IsWindowFocused()) {
+      if (ImGui::IsWindowFocused()) {
         canvas->mouse_control();
       }
 
@@ -83,13 +82,13 @@ bool ManualLoopCloseModal::run() {
 
     ImGui::Text("fitness_score:%.4f", fitness_score);
 
-    if(ImGui::Button("Auto align")) {
+    if (ImGui::Button("Auto align")) {
       ImGui::OpenPopup("auto align");
     }
     auto_align();
 
     ImGui::SameLine();
-    if(ImGui::Button("Scan matching")) {
+    if (ImGui::Button("Scan matching")) {
       ImGui::OpenPopup("scan matching");
     }
     scan_matching();
@@ -97,7 +96,7 @@ bool ManualLoopCloseModal::run() {
     ImGui::SameLine();
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.05f);
     float px = 0.0f;
-    if(ImGui::DragFloat("##PX", &px, 0.01, 0.0f, 0.0f, "PX")) {
+    if (ImGui::DragFloat("##PX", &px, 0.01, 0.0f, 0.0f, "PX")) {
       end_keyframe_pose.translation() += end_keyframe_pose.linear().block<3, 1>(0, 0) * px;
       update_fitness_score();
     }
@@ -105,7 +104,7 @@ bool ManualLoopCloseModal::run() {
     ImGui::SameLine();
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.05f);
     float py = 0.0f;
-    if(ImGui::DragFloat("##PY", &py, 0.01, 0.0f, 0.0f, "PY")) {
+    if (ImGui::DragFloat("##PY", &py, 0.01, 0.0f, 0.0f, "PY")) {
       end_keyframe_pose.translation() += end_keyframe_pose.linear().block<3, 1>(0, 1) * py;
       update_fitness_score();
     }
@@ -113,7 +112,7 @@ bool ManualLoopCloseModal::run() {
     ImGui::SameLine();
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.05f);
     float pz = 0.0f;
-    if(ImGui::DragFloat("##PZ", &pz, 0.01, 0.0f, 0.0f, "PZ")) {
+    if (ImGui::DragFloat("##PZ", &pz, 0.01, 0.0f, 0.0f, "PZ")) {
       end_keyframe_pose.translation() += end_keyframe_pose.linear().block<3, 1>(0, 2) * pz;
       update_fitness_score();
     }
@@ -121,7 +120,7 @@ bool ManualLoopCloseModal::run() {
     ImGui::SameLine();
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.05f);
     float rx = 0.0f;
-    if(ImGui::DragFloat("##RX", &rx, 0.01, 0.0f, 0.0f, "RX")) {
+    if (ImGui::DragFloat("##RX", &rx, 0.01, 0.0f, 0.0f, "RX")) {
       end_keyframe_pose = end_keyframe_pose * Eigen::AngleAxisd(rx, Eigen::Vector3d::UnitX());
       update_fitness_score();
     }
@@ -129,7 +128,7 @@ bool ManualLoopCloseModal::run() {
     ImGui::SameLine();
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.05f);
     float ry = 0.0f;
-    if(ImGui::DragFloat("##RY", &ry, 0.01, 0.0f, 0.0f, "RY")) {
+    if (ImGui::DragFloat("##RY", &ry, 0.01, 0.0f, 0.0f, "RY")) {
       end_keyframe_pose = end_keyframe_pose * Eigen::AngleAxisd(ry, Eigen::Vector3d::UnitY());
       update_fitness_score();
     }
@@ -137,18 +136,18 @@ bool ManualLoopCloseModal::run() {
     ImGui::SameLine();
     ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.05f);
     float rz = 0.0f;
-    if(ImGui::DragFloat("##RZ", &rz, 0.01, 0.0f, 0.0f, "RZ")) {
+    if (ImGui::DragFloat("##RZ", &rz, 0.01, 0.0f, 0.0f, "RZ")) {
       end_keyframe_pose = end_keyframe_pose * Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ());
       update_fitness_score();
     }
 
     ImGui::SameLine();
-    if(ImGui::Button("Reset")) {
+    if (ImGui::Button("Reset")) {
       end_keyframe_pose = end_keyframe_pose_init;
       update_fitness_score();
     }
 
-    if(ImGui::Button("Add edge")) {
+    if (ImGui::Button("Add edge")) {
       Eigen::Isometry3d relative = begin_keyframe_pose.inverse() * end_keyframe_pose;
       graph.add_edge(begin_keyframe->lock(), end_keyframe->lock(), relative);
       graph.optimize();
@@ -160,7 +159,7 @@ bool ManualLoopCloseModal::run() {
     }
 
     ImGui::SameLine();
-    if(ImGui::Button("Cancel")) {
+    if (ImGui::Button("Cancel")) {
       ImGui::CloseCurrentPopup();
       begin_keyframe = nullptr;
       end_keyframe = nullptr;
@@ -172,17 +171,15 @@ bool ManualLoopCloseModal::run() {
   return close_window;
 }
 
-void ManualLoopCloseModal::update_fitness_score() {
-    fitness_score = InformationMatrixCalculator::calc_fitness_score(begin_keyframe->lock()->cloud, end_keyframe->lock()->cloud, begin_keyframe_pose.inverse() * end_keyframe_pose, 1.0);
-}
+void ManualLoopCloseModal::update_fitness_score() { fitness_score = InformationMatrixCalculator::calc_fitness_score(begin_keyframe->lock()->cloud, end_keyframe->lock()->cloud, begin_keyframe_pose.inverse() * end_keyframe_pose, 1.0); }
 
 void ManualLoopCloseModal::auto_align() {
-  if(ImGui::BeginPopupModal("auto align", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+  if (ImGui::BeginPopupModal("auto align", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
     const char* items[] = {"FPFH"};
     ImGui::Combo("Method", &registration_method, items, IM_ARRAYSIZE(items));
 
     // FPFH
-    if(registration_method == 0) {
+    if (registration_method == 0) {
       ImGui::DragFloat("Normal estimation radius", &fpfh_normal_estimation_radius, 0.01f, 0.01f, 5.0f);
       ImGui::DragFloat("Search radius", &fpfh_search_radius, 0.01f, 0.01f, 5.0f);
       ImGui::DragInt("Max iterations", &fpfh_max_iterations, 1000, 1000, 100000);
@@ -193,7 +190,7 @@ void ManualLoopCloseModal::auto_align() {
       ImGui::DragFloat("Inlier fraction", &fpfh_inlier_fraction, 0.01f, 0.01f, 1.0f);
     }
 
-    if(ImGui::Button("OK")) {
+    if (ImGui::Button("OK")) {
       auto_alignment_progress = 0;
       auto_alignment_result = std::async(std::launch::async, [&]() {
         using FeatureT = pcl::FPFHSignature33;
@@ -263,7 +260,7 @@ void ManualLoopCloseModal::auto_align() {
       float fraction = auto_alignment_progress / 5.0f;
       ImGui::ProgressBar(fraction, ImVec2(128, 16));
 
-      if(result != std::future_status::timeout) {
+      if (result != std::future_status::timeout) {
         close_parent = true;
         end_keyframe_pose = begin_keyframe_pose * (*auto_alignment_result.get());
         update_fitness_score();
@@ -285,21 +282,19 @@ void ManualLoopCloseModal::auto_align() {
 }
 
 void ManualLoopCloseModal::scan_matching() {
-  if(ImGui::BeginPopupModal("scan matching", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+  if (ImGui::BeginPopupModal("scan matching", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
     const char* items[] = {"NDT", "GICP", "ICP"};
     ImGui::Combo("Method", &scan_matching_method, items, IM_ARRAYSIZE(items));
     ImGui::DragFloat("Resolution", &scan_matching_resolution, 0.1, 0.1f, 15.0f);
 
-    if(ImGui::Button("OK")) {
+    if (ImGui::Button("OK")) {
       pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr registration;
-      switch(scan_matching_method) {
-        case 0:
-          {
+      switch (scan_matching_method) {
+        case 0: {
           auto ndt = boost::make_shared<pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>>();
           ndt->setResolution(scan_matching_resolution);
           registration = ndt;
-          }
-          break;
+        } break;
         case 1:
           registration = boost::make_shared<pclomp::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>>();
           break;
@@ -323,7 +318,7 @@ void ManualLoopCloseModal::scan_matching() {
     }
 
     ImGui::SameLine();
-    if(ImGui::Button("Cancel")) {
+    if (ImGui::Button("Cancel")) {
       ImGui::CloseCurrentPopup();
     }
     ImGui::EndPopup();
@@ -331,29 +326,32 @@ void ManualLoopCloseModal::scan_matching() {
 }
 
 void ManualLoopCloseModal::draw_gl(glk::GLSLShader& shader) {
+  DrawFlags draw_flags;
   shader.set_uniform("point_scale", 100.0f);
-  if(begin_keyframe) {
-    begin_keyframe->draw(shader, Eigen::Vector4f(0.0f, 0.0f, 1.0f, 1.0f), begin_keyframe->lock()->estimate().matrix().cast<float>());
+  if (begin_keyframe) {
+    begin_keyframe->draw(draw_flags, shader, Eigen::Vector4f(0.0f, 0.0f, 1.0f, 1.0f), begin_keyframe->lock()->estimate().matrix().cast<float>());
   }
 
-  if(end_keyframe) {
-    end_keyframe->draw(shader, Eigen::Vector4f(0.0f, 1.0f, 0.0f, 1.0f), end_keyframe->lock()->estimate().matrix().cast<float>());
+  if (end_keyframe) {
+    end_keyframe->draw(draw_flags, shader, Eigen::Vector4f(0.0f, 1.0f, 0.0f, 1.0f), end_keyframe->lock()->estimate().matrix().cast<float>());
   }
 }
 
 void ManualLoopCloseModal::draw_canvas() {
-  if(!begin_keyframe || !end_keyframe) {
+  if (!begin_keyframe || !end_keyframe) {
     return;
   }
   glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+
+  DrawFlags draw_flags;
 
   canvas->bind();
   canvas->shader->set_uniform("color_mode", 1);
   canvas->shader->set_uniform("point_scale", 100.0f);
 
   Eigen::Isometry3d relative = begin_keyframe_pose.inverse() * end_keyframe_pose;
-  begin_keyframe->draw(*canvas->shader, Eigen::Vector4f(0.0f, 0.0f, 1.0f, 1.0f), Eigen::Matrix4f::Identity());
-  end_keyframe->draw(*canvas->shader, Eigen::Vector4f(0.0f, 1.0f, 0.0f, 1.0f), relative.cast<float>().matrix());
+  begin_keyframe->draw(draw_flags, *canvas->shader, Eigen::Vector4f(0.0f, 0.0f, 1.0f, 1.0f), Eigen::Matrix4f::Identity());
+  end_keyframe->draw(draw_flags, *canvas->shader, Eigen::Vector4f(0.0f, 1.0f, 0.0f, 1.0f), relative.cast<float>().matrix());
 
   canvas->shader->set_uniform("color_mode", 1);
   canvas->shader->set_uniform("model_matrix", (relative * Eigen::UniformScaling<double>(3.0)).cast<float>().matrix());
@@ -362,4 +360,4 @@ void ManualLoopCloseModal::draw_canvas() {
 
   glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
 }
-}
+}  // namespace hdl_graph_slam

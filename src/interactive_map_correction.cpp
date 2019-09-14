@@ -21,8 +21,8 @@ class InteractiveMapCorrectionApplication : public guik::Application {
 public:
   InteractiveMapCorrectionApplication() : Application() {}
 
-  bool init(const Eigen::Vector2i& size, const char* glsl_version="#version 330") override {
-    if(!Application::init(size, glsl_version)) {
+  bool init(const Eigen::Vector2i& size, const char* glsl_version = "#version 330") override {
+    if (!Application::init(size, glsl_version)) {
       return false;
     }
 
@@ -32,7 +32,7 @@ public:
     std::string data_directory = package_path + "/data";
 
     main_canvas.reset(new guik::GLCanvas(data_directory, Eigen::Vector2i(1920, 1080)));
-    if(!main_canvas->ready()) {
+    if (!main_canvas->ready()) {
       close();
     }
 
@@ -71,6 +71,7 @@ public:
     plane_detection_modal->draw_ui();
     automatic_loop_close_window->draw_ui();
 
+    draw_flags_config();
     context_menu();
     mouse_control();
   }
@@ -94,7 +95,7 @@ public:
     main_canvas->shader->set_uniform("point_scale", 50.0f);
     {
       std::lock_guard<std::mutex> lock(graph->optimization_mutex);
-      graph->draw(*main_canvas->shader);
+      graph->draw(draw_flags, *main_canvas->shader);
     }
 
     plane_detection_modal->draw_gl(*main_canvas->shader);
@@ -108,67 +109,97 @@ public:
   }
 
 private:
+  void draw_flags_config() {
+    if (!show_draw_config_window) {
+      return;
+    }
+
+    ImGui::Begin("graph rendering config", &show_draw_config_window, ImGuiWindowFlags_AlwaysAutoResize);
+
+    ImGui::Text("General");
+    ImGui::Checkbox("Vertices", &draw_flags.draw_verticies);
+    ImGui::SameLine();
+    ImGui::Checkbox("Edges", &draw_flags.draw_edges);
+
+    ImGui::Text("Vertices");
+    ImGui::Checkbox("Keyframes", &draw_flags.draw_keyframe_vertices);
+    ImGui::SameLine();
+    ImGui::Checkbox("Planes", &draw_flags.draw_plane_vertices);
+
+    ImGui::Text("Edges");
+    ImGui::Checkbox("SE3", &draw_flags.draw_se3_edges);
+    ImGui::SameLine();
+    ImGui::Checkbox("SE3Planes", &draw_flags.draw_se3_plane_edges);
+    ImGui::SameLine();
+    ImGui::Checkbox("SE3Floor", &draw_flags.draw_floor_edges);
+
+    ImGui::End();
+  }
+
   void main_menu() {
     ImGui::BeginMainMenuBar();
 
-    if(ImGui::BeginMenu("File")) {
-      if(ImGui::MenuItem("Open..")) {
+    if (ImGui::BeginMenu("File")) {
+      if (ImGui::MenuItem("Open..")) {
         open_map_data();
       }
 
-      if(ImGui::MenuItem("Save Map Data")) {
+      if (ImGui::MenuItem("Save Map Data")) {
         save_map_data();
       }
 
-      if(ImGui::MenuItem("Export PointCloud")) {
+      if (ImGui::MenuItem("Export PointCloud")) {
         export_pointcloud();
       }
 
-      if(ImGui::MenuItem("Quit")) {
+      if (ImGui::MenuItem("Quit")) {
         close();
       }
 
       ImGui::EndMenu();
     }
 
-    if(ImGui::BeginMenu("View")) {
+    if (ImGui::BeginMenu("View")) {
       if (ImGui::MenuItem("Projection setting")) {
         main_canvas->show_projection_setting();
+      }
+      if (ImGui::MenuItem("Graph rendering setting")) {
+        show_draw_config_window = true;
       }
 
       ImGui::EndMenu();
     }
 
-    if(ImGui::BeginMenu("Graph")) {
-        if(ImGui::MenuItem("Automatic loop detection")) {
-          automatic_loop_close_window->show();
-        }
-
-        if(ImGui::MenuItem("Optimize")) {
-          graph->optimize();
-        }
-
-        ImGui::EndMenu();
+    if (ImGui::BeginMenu("Graph")) {
+      if (ImGui::MenuItem("Automatic loop detection")) {
+        automatic_loop_close_window->show();
       }
 
-      ImGui::EndMainMenuBar();
+      if (ImGui::MenuItem("Optimize")) {
+        graph->optimize();
+      }
+
+      ImGui::EndMenu();
+    }
+
+    ImGui::EndMainMenuBar();
   }
 
 private:
   void open_map_data() {
     pfd::select_folder dialog("choose graph directory");
-    while(!dialog.ready()) {
+    while (!dialog.ready()) {
       usleep(10);
     }
 
     auto result = dialog.result();
-    if(result.empty()) {
+    if (result.empty()) {
       return;
     }
 
-    if(!graph->load_map_data(result)) {
+    if (!graph->load_map_data(result)) {
       pfd::message notify("Error", "failed to load graph data", pfd::choice::ok);
-      while(!notify.ready()) {
+      while (!notify.ready()) {
         usleep(10);
       }
       return;
@@ -179,7 +210,7 @@ private:
 
   void save_map_data() {
     std::unique_ptr<pfd::save_file> dialog(new pfd::save_file("choose file"));
-    while(!dialog->ready()) {
+    while (!dialog->ready()) {
       usleep(10);
     }
 
@@ -189,7 +220,7 @@ private:
 
   void export_pointcloud() {
     std::unique_ptr<pfd::save_file> dialog(new pfd::save_file("choose file"));
-    while(!dialog->ready()) {
+    while (!dialog->ready()) {
       usleep(10);
     }
 
@@ -201,10 +232,10 @@ private:
 
   void mouse_control() {
     ImGuiIO& io = ImGui::GetIO();
-    if(!io.WantCaptureMouse) {
+    if (!io.WantCaptureMouse) {
       main_canvas->mouse_control();
 
-      if(ImGui::IsMouseClicked(1)) {
+      if (ImGui::IsMouseClicked(1)) {
         auto mouse_pos = ImGui::GetMousePos();
         right_clicked_pos = Eigen::Vector2i(mouse_pos.x, mouse_pos.y);
       }
@@ -212,7 +243,7 @@ private:
   }
 
   void context_menu() {
-    if(ImGui::BeginPopupContextVoid("context menu")) {
+    if (ImGui::BeginPopupContextVoid("context menu")) {
       auto mouse_pos = ImGui::GetMousePos();
       Eigen::Vector4i picked_info = main_canvas->pick_info(right_clicked_pos);
       int picked_type = picked_info[0];
@@ -221,33 +252,43 @@ private:
       float depth = main_canvas->pick_depth(right_clicked_pos);
       Eigen::Vector3f pos_3d = main_canvas->unproject(right_clicked_pos, depth);
 
-      if(picked_type == DrawableObject::POINTS) {
+      if (picked_type == DrawableObject::POINTS) {
         ImGui::Text("Map point");
         ImGui::Text("Pos: %.3f %.3f %.3f", pos_3d[0], pos_3d[1], pos_3d[2]);
 
-        if(ImGui::Button("Plane detection")) {
+        if (ImGui::Button("Plane detection")) {
           plane_detection_modal->set_center_point(pos_3d);
           plane_detection_modal->show();
           ImGui::CloseCurrentPopup();
         }
       }
 
-      if(picked_type == DrawableObject::KEYFRAME) {
+      if (picked_type == DrawableObject::KEYFRAME) {
         ImGui::Text("Keyframe %d", picked_id);
         ImGui::Text("Pos: %.3f %.3f %.3f", pos_3d[0], pos_3d[1], pos_3d[2]);
 
         ImGui::Text("\nLoop close");
-        if(ImGui::Button("Loop begin")) {
+        if (ImGui::Button("Loop begin")) {
           manual_loop_close_modal->set_begin_keyframe(picked_id);
           ImGui::CloseCurrentPopup();
         }
-        if(ImGui::Button("Loop end")) {
+        if (ImGui::Button("Loop end")) {
           manual_loop_close_modal->set_end_keyframe(picked_id);
           ImGui::OpenPopup("manual loop close");
         }
       }
 
-      if(manual_loop_close_modal->run()) {
+      if (picked_type == DrawableObject::VERTEX) {
+        ImGui::Text("Vertex %d", picked_id);
+        ImGui::Text("Pos: %.3f %.3f %.3f", pos_3d[0], pos_3d[1], pos_3d[2]);
+      }
+
+      if (picked_type == DrawableObject::EDGE) {
+        ImGui::Text("Edge %d", picked_id);
+        ImGui::Text("Pos: %.3f %.3f %.3f", pos_3d[0], pos_3d[1], pos_3d[2]);
+      }
+
+      if (manual_loop_close_modal->run()) {
         ImGui::CloseCurrentPopup();
       }
 
@@ -261,16 +302,18 @@ private:
   std::unique_ptr<ManualLoopCloseModal> manual_loop_close_modal;
   std::unique_ptr<AutomaticLoopCloseWindow> automatic_loop_close_window;
 
+  bool show_draw_config_window;
+  DrawFlags draw_flags;
   std::unique_ptr<guik::GLCanvas> main_canvas;
   std::unique_ptr<InteractiveGraphView> graph;
 };
 
-}
+}  // namespace hdl_graph_slam
 
 int main(int argc, char** argv) {
   std::unique_ptr<guik::Application> app(new hdl_graph_slam::InteractiveMapCorrectionApplication());
 
-  if(!app->init(Eigen::Vector2i(1920, 1080))) {
+  if (!app->init(Eigen::Vector2i(1920, 1080))) {
     return 1;
   }
 

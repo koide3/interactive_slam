@@ -8,6 +8,7 @@
 #include <hdl_graph_slam/interactive_graph.hpp>
 
 #include <hdl_graph_slam/view/edge_view.hpp>
+#include <hdl_graph_slam/view/vertex_view.hpp>
 #include <hdl_graph_slam/view/keyframe_view.hpp>
 #include <hdl_graph_slam/view/line_buffer.hpp>
 #include <hdl_graph_slam/view/drawable_object.hpp>
@@ -16,17 +17,15 @@ namespace hdl_graph_slam {
 
 class InteractiveGraphView : public InteractiveGraph {
 public:
-  InteractiveGraphView() {
-    line_buffer.reset(new LineBuffer());
-  }
+  InteractiveGraphView() { line_buffer.reset(new LineBuffer()); }
   virtual ~InteractiveGraphView() override {}
 
   void update_view() {
     bool keyframe_inserted = false;
-    for(const auto& key_item : keyframes) {
+    for (const auto& key_item : keyframes) {
       auto& keyframe = key_item.second;
       auto found = keyframes_view_map.find(keyframe);
-      if(found == keyframes_view_map.end()) {
+      if (found == keyframes_view_map.end()) {
         keyframe_inserted = true;
         keyframes_view.push_back(std::make_shared<KeyFrameView>(keyframe));
         keyframes_view_map[keyframe] = keyframes_view.back();
@@ -35,18 +34,33 @@ public:
       }
     }
 
-    if(keyframe_inserted) {
+    if (keyframe_inserted) {
       std::sort(keyframes_view.begin(), keyframes_view.end(), [=](const KeyFrameView::Ptr& lhs, const KeyFrameView::Ptr& rhs) { return lhs->lock()->id() < rhs->lock()->id(); });
     }
 
-    for(const auto& edge: graph->edges()) {
+    for (const auto& vertex : graph->vertices()) {
+      auto found = vertices_view_map.find(vertex.second->id());
+      if (found != vertices_view_map.end()) {
+        continue;
+      }
+
+      auto vertex_view = VertexView::create(vertex.second);
+      if (vertex_view) {
+        vertices_view.push_back(vertex_view);
+        vertices_view_map[vertex.second->id()] = vertex_view;
+
+        drawables.push_back(vertex_view);
+      }
+    }
+
+    for (const auto& edge : graph->edges()) {
       auto found = edges_view_map.find(edge);
-      if(found != edges_view_map.end()) {
+      if (found != edges_view_map.end()) {
         continue;
       }
 
       auto edge_view = EdgeView::create(edge, *line_buffer);
-      if(edge_view) {
+      if (edge_view) {
         edges_view.push_back(edge_view);
         edges_view_map[edge] = edge_view;
 
@@ -55,13 +69,13 @@ public:
     }
   }
 
-  void draw(glk::GLSLShader& shader) {
+  void draw(const DrawFlags& flags, glk::GLSLShader& shader) {
     update_view();
     line_buffer->clear();
 
-    for(auto& drawable : drawables) {
-      if(drawable->available()) {
-        drawable->draw(shader);
+    for (auto& drawable : drawables) {
+      if (drawable->available()) {
+        drawable->draw(flags, shader);
       }
     }
 
@@ -74,6 +88,9 @@ public:
 
   std::vector<KeyFrameView::Ptr> keyframes_view;
   std::unordered_map<InteractiveKeyFrame::Ptr, KeyFrameView::Ptr> keyframes_view_map;
+
+  std::vector<VertexView::Ptr> vertices_view;
+  std::unordered_map<long, VertexView::Ptr> vertices_view_map;
 
   std::vector<EdgeView::Ptr> edges_view;
   std::unordered_map<g2o::HyperGraph::Edge*, EdgeView::Ptr> edges_view_map;

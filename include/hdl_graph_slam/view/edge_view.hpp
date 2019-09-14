@@ -21,12 +21,6 @@ public:
 
   long id() const;
 
-  virtual bool available() const = 0;
-
-  virtual void draw(glk::GLSLShader& shader) = 0;
-
-  virtual void draw(glk::GLSLShader& shader, const Eigen::Vector4f& color, const Eigen::Matrix4f& model_matrix) = 0;
-
 private:
   EdgeView();
 
@@ -35,6 +29,6 @@ protected:
   g2o::HyperGraph::Edge* edge;
 };
 
-}
+}  // namespace hdl_graph_slam
 
 #endif

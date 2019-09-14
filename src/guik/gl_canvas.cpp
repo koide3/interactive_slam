@@ -30,7 +30,7 @@ GLCanvas::GLCanvas(const std::string& data_directory, const Eigen::Vector2i& siz
   frame_buffer->add_color_buffer(GL_RGBA32I, GL_RGBA_INTEGER, GL_INT);
 
   shader.reset(new glk::GLSLShader());
-  if(!shader->init(data_directory + "/shader/rainbow")) {
+  if (!shader->init(data_directory + "/shader/rainbow")) {
     shader.reset();
     return;
   }
@@ -161,7 +161,7 @@ Eigen::Vector4i GLCanvas::pick_info(const Eigen::Vector2i& p, int window) const 
     int index = ((size[1] - p[1]) * size[0] + p_[0]) * 4;
     Eigen::Vector4i info = Eigen::Map<Eigen::Vector4i>(&pixels[index]);
 
-    if(info[3] >= 0) {
+    if (info[3] >= 0) {
       return info;
     }
   }
@@ -227,7 +227,7 @@ Eigen::Vector3f GLCanvas::unproject(const Eigen::Vector2i& p, float depth) const
 }
 
 void GLCanvas::draw_ui() {
-  ImGui::Begin("shader setting");
+  ImGui::Begin("shader setting", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
   ImGui::DragFloat("min_z", &min_z, 0.1f);
   ImGui::DragFloat("max_z", &max_z, 0.1f);
   ImGui::End();
@@ -235,8 +235,6 @@ void GLCanvas::draw_ui() {
   projection_control->draw_ui();
 }
 
-void GLCanvas::show_projection_setting() {
-  projection_control->show();
-}
+void GLCanvas::show_projection_setting() { projection_control->show(); }
 
 }  // namespace guik
