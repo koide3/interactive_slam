@@ -67,10 +67,13 @@ private:
   float ransac_distance_thresh;
   int min_plane_supports;
 
+  int robust_kernel;
+  float robust_kernel_delta;
+
   RegionGrowingResult::Ptr region_growing_result;
   PlaneDetectionResult::Ptr plane_detection_result;
 };
 
-}
+}  // namespace hdl_graph_slam
 
 #endif

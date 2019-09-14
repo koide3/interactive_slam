@@ -20,18 +20,19 @@
 namespace hdl_graph_slam {
 
 PlaneDetectionModal::PlaneDetectionModal(InteractiveGraphView& graph)
-: show_window(false),
-graph(graph),
-center_point(0.0f, 0.0f, 0.0f),
-initial_neighbor_search_radius(1.0f),
-min_cluster_size(50),
-max_cluster_size(10000),
-num_neighbors(10),
-smoothness_threshold(20.0f),
-curvature_threshold(0.5f),
-ransac_distance_thresh(0.25f),
-min_plane_supports(30)
-{}
+    : show_window(false),
+      graph(graph),
+      center_point(0.0f, 0.0f, 0.0f),
+      initial_neighbor_search_radius(1.0f),
+      min_cluster_size(50),
+      max_cluster_size(10000),
+      num_neighbors(10),
+      smoothness_threshold(20.0f),
+      curvature_threshold(0.5f),
+      ransac_distance_thresh(0.25f),
+      min_plane_supports(30),
+      robust_kernel(1),
+      robust_kernel_delta(0.1f) {}
 
 PlaneDetectionModal::~PlaneDetectionModal() {}
 
@@ -41,9 +42,7 @@ void PlaneDetectionModal::set_center_point(const Eigen::Vector3f& point) {
   center_point = point;
 }
 
-void PlaneDetectionModal::show() {
-  show_window = true;
-}
+void PlaneDetectionModal::show() { show_window = true; }
 
 RegionGrowingResult::Ptr PlaneDetectionModal::region_growing() {
   RegionGrowingResult::Ptr result(new RegionGrowingResult());
@@ -52,7 +51,7 @@ RegionGrowingResult::Ptr PlaneDetectionModal::region_growing() {
 
   for (const auto& keyframe : graph.keyframes) {
     std::vector<int> neighbor_indices = keyframe.second->neighbors(center_point, initial_neighbor_search_radius);
-    if(neighbor_indices.size() < 10) {
+    if (neighbor_indices.size() < 10) {
       continue;
     }
 
@@ -61,12 +60,12 @@ RegionGrowingResult::Ptr PlaneDetectionModal::region_growing() {
     pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>());
     pcl::transformPointCloud(*keyframe.second->cloud, *cloud, keyframe.second->node->estimate().cast<float>());
 
-    if(accumulated_points->empty()) {
+    if (accumulated_points->empty()) {
       pcl::PointNormal pt;
       accumulated_points->push_back(cloud->at(neighbor_indices[0]));
     }
 
-    for(int i=0; i<cloud->size(); i++) {
+    for (int i = 0; i < cloud->size(); i++) {
       accumulated_points->push_back(cloud->at(i));
     }
   }
@@ -131,7 +130,7 @@ PlaneDetectionResult::Ptr PlaneDetectionModal::detect_plane(const RegionGrowingR
   PlaneDetectionResult::Ptr result(new PlaneDetectionResult());
   ransac.getModelCoefficients(result->coeffs);
 
-  for(const auto& candidate: rg_result->candidates) {
+  for (const auto& candidate : rg_result->candidates) {
     Eigen::Vector4f coeffs = result->coeffs;
     Eigen::Vector4f local_coeffs;
 
@@ -140,7 +139,7 @@ PlaneDetectionResult::Ptr PlaneDetectionModal::detect_plane(const RegionGrowingR
     local_coeffs[3] = coeffs[3] - trans.translation().dot(local_coeffs.head<3>());
 
     auto inliers = detect_plane_with_coeffs(candidate->cloud, local_coeffs);
-    if(inliers == nullptr || inliers->size() < min_plane_supports) {
+    if (inliers == nullptr || inliers->size() < min_plane_supports) {
       continue;
     }
 
@@ -158,7 +157,7 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr PlaneDetectionModal::detect_plane_with_coef
   pcl::PointIndices::Ptr init_indices(new pcl::PointIndices);
   model_p->selectWithinDistance(coeffs, ransac_distance_thresh, init_indices->indices);
 
-  if(init_indices->indices.size() < 10) {
+  if (init_indices->indices.size() < 10) {
     return nullptr;
   }
 
@@ -177,7 +176,7 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr PlaneDetectionModal::detect_plane_with_coef
   Eigen::VectorXf coeffs_;
   ransac.getModelCoefficients(coeffs_);
 
-  if(coeffs_.head<3>().dot(coeffs.head<3>()) < 0.0f) {
+  if (coeffs_.head<3>().dot(coeffs.head<3>()) < 0.0f) {
     coeffs_ *= -1.0f;
   }
   coeffs = coeffs_;
@@ -194,7 +193,7 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr PlaneDetectionModal::detect_plane_with_coef
 }
 
 void PlaneDetectionModal::draw_ui() {
-  if(!show_window) {
+  if (!show_window) {
     region_growing_result.reset();
     return;
   }
@@ -209,7 +208,7 @@ void PlaneDetectionModal::draw_ui() {
   ImGui::DragFloat("Smoothness threshold[deg]", &smoothness_threshold, 0.1f, 0.1f, 100.0f);
   ImGui::DragFloat("Curvature threshold", &curvature_threshold, 0.1f, 0.1f, 100.0f);
 
-  if(ImGui::Button("Perform")) {
+  if (ImGui::Button("Perform")) {
     region_growing_result = nullptr;
     plane_detection_result = nullptr;
     region_growing_result = region_growing();
@@ -225,7 +224,7 @@ void PlaneDetectionModal::draw_ui() {
   ImGui::DragInt("Min plane supports", &min_plane_supports, 1, 5, 100);
 
   if (ImGui::Button("Detect")) {
-    if(region_growing_result) {
+    if (region_growing_result) {
       plane_detection_result = nullptr;
       plane_detection_result = detect_plane(region_growing_result);
     }
@@ -237,17 +236,21 @@ void PlaneDetectionModal::draw_ui() {
     ImGui::Text("coeffs:%.3f %.3f %.3f %.3f", coeffs[0], coeffs[1], coeffs[2], coeffs[3]);
   }
 
-  ImGui::Text("Finalize");
+  ImGui::Text("Robust kernel");
+  const char* kernels[] = {"NONE", "Huber"};
+  ImGui::Combo("Kernel type", &robust_kernel, kernels, IM_ARRAYSIZE(kernels));
+  ImGui::DragFloat("Kernel delta", &robust_kernel_delta, 0.01f, 0.01f, 10.0f);
+
   if (ImGui::Button("Add edge")) {
     if (plane_detection_result) {
       auto plane_vertex = graph.add_plane(plane_detection_result->coeffs.cast<double>());
 
-      for(int i=0; i<plane_detection_result->candidates.size(); i++) {
+      for (int i = 0; i < plane_detection_result->candidates.size(); i++) {
         const auto& candidate = plane_detection_result->candidates[i];
         const Eigen::Vector4f& coeffs = plane_detection_result->candidate_local_coeffs[i];
 
         Eigen::Matrix3d information = Eigen::Matrix3d::Identity();
-        graph.add_edge(candidate, plane_vertex, coeffs.cast<double>(), information);
+        graph.add_edge(candidate, plane_vertex, coeffs.cast<double>(), information, kernels[robust_kernel], robust_kernel_delta);
       }
 
       graph.optimize();
@@ -259,7 +262,7 @@ void PlaneDetectionModal::draw_ui() {
 }
 
 void PlaneDetectionModal::draw_gl(glk::GLSLShader& shader) {
-  if(!show_window) {
+  if (!show_window) {
     region_growing_result = nullptr;
     plane_detection_result = nullptr;
     return;
@@ -268,13 +271,13 @@ void PlaneDetectionModal::draw_gl(glk::GLSLShader& shader) {
   shader.set_uniform("color_mode", 1);
   shader.set_uniform("point_scale", 200.0f);
 
-  if(plane_detection_result) {
+  if (plane_detection_result) {
     shader.set_uniform("material_color", Eigen::Vector4f(0.0f, 0.5f, 1.0f, 1.0f));
     shader.set_uniform("model_matrix", Eigen::Matrix4f::Identity().eval());
     // plane_detection_result->cloud_buffer->draw(shader);
 
     const auto& sphere = glk::Primitives::instance()->primitive(glk::Primitives::SPHERE);
-    for (int i = 0; i < plane_detection_result->candidates.size(); i++){
+    for (int i = 0; i < plane_detection_result->candidates.size(); i++) {
       const auto& candidate = plane_detection_result->candidates[i];
       Eigen::Matrix4f model_matrix = candidate->node->estimate().cast<float>().matrix();
       model_matrix.block<3, 3>(0, 0) *= 0.5f;
@@ -289,13 +292,13 @@ void PlaneDetectionModal::draw_gl(glk::GLSLShader& shader) {
     return;
   }
 
-  if(region_growing_result) {
+  if (region_growing_result) {
     shader.set_uniform("material_color", Eigen::Vector4f(1.0f, 0.5f, 0.0f, 1.0f));
     shader.set_uniform("model_matrix", Eigen::Matrix4f::Identity().eval());
     region_growing_result->cloud_buffer->draw(shader);
 
     const auto& sphere = glk::Primitives::instance()->primitive(glk::Primitives::SPHERE);
-    for(const auto& candidate: region_growing_result->candidates){
+    for (const auto& candidate : region_growing_result->candidates) {
       Eigen::Matrix4f model_matrix = candidate->node->estimate().cast<float>().matrix();
       model_matrix.block<3, 3>(0, 0) *= 0.5f;
       shader.set_uniform("model_matrix", model_matrix);
@@ -303,6 +306,5 @@ void PlaneDetectionModal::draw_gl(glk::GLSLShader& shader) {
     }
   }
 }
-
 
 }  // namespace hdl_graph_slam
