@@ -7,9 +7,9 @@
 #include <Eigen/Dense>
 #include <boost/format.hpp>
 
-#include <hdl_graph_slam/keyframe.hpp>
 #include <hdl_graph_slam/graph_slam.hpp>
 #include <hdl_graph_slam/parameter_server.hpp>
+#include <hdl_graph_slam/interactive_keyframe.hpp>
 
 namespace hdl_graph_slam {
 
@@ -42,7 +42,7 @@ public:
   double chi2_after;
   double elapsed_time_msec;
 
-  std::unordered_map<long, KeyFrame::Ptr> keyframes;
+  std::unordered_map<long, InteractiveKeyFrame::Ptr> keyframes;
 
   std::unique_ptr<InformationMatrixCalculator> inf_calclator;
 };

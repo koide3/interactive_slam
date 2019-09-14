@@ -8,6 +8,7 @@
 #include <guik/imgui_application.hpp>
 
 #include <hdl_graph_slam/parameter_server.hpp>
+#include <hdl_graph_slam/plane_detection_modal.hpp>
 #include <hdl_graph_slam/manual_loop_close_model.hpp>
 #include <hdl_graph_slam/automatic_loop_close_window.hpp>
 #include <hdl_graph_slam/view/interactive_graph_view.hpp>
@@ -36,10 +37,11 @@ public:
     }
 
     graph.reset(new InteractiveGraphView());
+    plane_detection_modal.reset(new PlaneDetectionModal(*graph));
     manual_loop_close_modal.reset(new ManualLoopCloseModal(*graph, data_directory));
     automatic_loop_close_window.reset(new AutomaticLoopCloseWindow(*graph, data_directory));
 
-        return true;
+    return true;
   }
 
   virtual void draw_ui() override {
@@ -66,6 +68,7 @@ public:
 
     main_canvas->draw_ui();
 
+    plane_detection_modal->draw_ui();
     automatic_loop_close_window->draw_ui();
 
     context_menu();
@@ -93,6 +96,8 @@ public:
       std::lock_guard<std::mutex> lock(graph->optimization_mutex);
       graph->draw(*main_canvas->shader);
     }
+
+    plane_detection_modal->draw_gl(*main_canvas->shader);
     manual_loop_close_modal->draw_gl(*main_canvas->shader);
     automatic_loop_close_window->draw_gl(*main_canvas->shader);
 
@@ -217,20 +222,26 @@ private:
       Eigen::Vector3f pos_3d = main_canvas->unproject(right_clicked_pos, depth);
 
       if(picked_type == DrawableObject::POINTS) {
-        ImGui::Text("map points");
-        ImGui::Text("pos: %.3f %.3f %.3f", pos_3d[0], pos_3d[1], pos_3d[2]);
+        ImGui::Text("Map point");
+        ImGui::Text("Pos: %.3f %.3f %.3f", pos_3d[0], pos_3d[1], pos_3d[2]);
+
+        if(ImGui::Button("Plane detection")) {
+          plane_detection_modal->set_center_point(pos_3d);
+          plane_detection_modal->show();
+          ImGui::CloseCurrentPopup();
+        }
       }
 
       if(picked_type == DrawableObject::KEYFRAME) {
-        ImGui::Text("keyframe %d", picked_id);
-        ImGui::Text("pos: %.3f %.3f %.3f", pos_3d[0], pos_3d[1], pos_3d[2]);
+        ImGui::Text("Keyframe %d", picked_id);
+        ImGui::Text("Pos: %.3f %.3f %.3f", pos_3d[0], pos_3d[1], pos_3d[2]);
 
-        ImGui::Text("\nloop close");
-        if(ImGui::Button("loop begin")) {
+        ImGui::Text("\nLoop close");
+        if(ImGui::Button("Loop begin")) {
           manual_loop_close_modal->set_begin_keyframe(picked_id);
           ImGui::CloseCurrentPopup();
         }
-        if(ImGui::Button("loop end")) {
+        if(ImGui::Button("Loop end")) {
           manual_loop_close_modal->set_end_keyframe(picked_id);
           ImGui::OpenPopup("manual loop close");
         }
@@ -239,12 +250,14 @@ private:
       if(manual_loop_close_modal->run()) {
         ImGui::CloseCurrentPopup();
       }
+
       ImGui::EndPopup();
     }
   }
 
 private:
   Eigen::Vector2i right_clicked_pos;
+  std::unique_ptr<PlaneDetectionModal> plane_detection_modal;
   std::unique_ptr<ManualLoopCloseModal> manual_loop_close_modal;
   std::unique_ptr<AutomaticLoopCloseWindow> automatic_loop_close_window;
 

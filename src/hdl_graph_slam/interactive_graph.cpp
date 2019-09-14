@@ -52,7 +52,7 @@ namespace hdl_graph_slam {
         break;
       }
 
-      KeyFrame::Ptr keyframe = std::make_shared<KeyFrame>(keyframe_dir, graph.get());
+      InteractiveKeyFrame::Ptr keyframe = std::make_shared<InteractiveKeyFrame>(keyframe_dir, graph.get());
       if(!keyframe->node) {
         std::cerr << "error : failed to load keyframe!!" << std::endl;
         std::cerr << "      : " << keyframe_dir << std::endl;

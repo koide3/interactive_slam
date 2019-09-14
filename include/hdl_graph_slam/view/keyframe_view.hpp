@@ -5,7 +5,7 @@
 #include <glk/pointcloud_buffer.hpp>
 #include <glk/primitives/primitives.hpp>
 
-#include <hdl_graph_slam/keyframe.hpp>
+#include <hdl_graph_slam/interactive_keyframe.hpp>
 #include <hdl_graph_slam/view/drawable_object.hpp>
 
 namespace hdl_graph_slam {
@@ -14,14 +14,14 @@ class KeyFrameView : public DrawableObject {
   public:
     using Ptr = std::shared_ptr<KeyFrameView>;
 
-    KeyFrameView(const KeyFrame::Ptr& kf) {
+    KeyFrameView(const InteractiveKeyFrame::Ptr& kf) {
         keyframe = kf;
 
         std::cout << kf->id() << " : ";
         pointcloud_buffer.reset(new glk::PointCloudBuffer(kf->cloud));
     }
 
-    KeyFrame::Ptr lock() const { return keyframe.lock(); }
+    InteractiveKeyFrame::Ptr lock() const { return keyframe.lock(); }
 
     virtual bool available() const override { return !keyframe.expired(); }
 
@@ -30,7 +30,7 @@ class KeyFrameView : public DrawableObject {
         return;
       }
 
-      KeyFrame::Ptr kf = keyframe.lock();
+      InteractiveKeyFrame::Ptr kf = keyframe.lock();
       Eigen::Matrix4f model_matrix = kf->estimate().matrix().cast<float>();
       shader.set_uniform("color_mode", 0);
       shader.set_uniform("model_matrix", model_matrix);
@@ -53,7 +53,7 @@ class KeyFrameView : public DrawableObject {
         return;
       }
 
-      KeyFrame::Ptr kf = keyframe.lock();
+      InteractiveKeyFrame::Ptr kf = keyframe.lock();
 
       shader.set_uniform("color_mode", 1);
       shader.set_uniform("material_color", color);
@@ -70,7 +70,7 @@ class KeyFrameView : public DrawableObject {
     }
 
   private:
-    std::weak_ptr<KeyFrame> keyframe;
+    std::weak_ptr<InteractiveKeyFrame> keyframe;
     std::unique_ptr<glk::PointCloudBuffer> pointcloud_buffer;
 };
 

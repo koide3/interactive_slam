@@ -19,7 +19,7 @@ public:
   InteractiveGraphView() {
     line_buffer.reset(new LineBuffer());
   }
-  virtual ~InteractiveGraphView() {}
+  virtual ~InteractiveGraphView() override {}
 
   void update_view() {
     bool keyframe_inserted = false;
@@ -73,7 +73,7 @@ public:
   std::unique_ptr<LineBuffer> line_buffer;
 
   std::vector<KeyFrameView::Ptr> keyframes_view;
-  std::unordered_map<KeyFrame::Ptr, KeyFrameView::Ptr> keyframes_view_map;
+  std::unordered_map<InteractiveKeyFrame::Ptr, KeyFrameView::Ptr> keyframes_view_map;
 
   std::vector<EdgeView::Ptr> edges_view;
   std::unordered_map<g2o::HyperGraph::Edge*, EdgeView::Ptr> edges_view_map;
