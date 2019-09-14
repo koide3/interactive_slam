@@ -23,7 +23,7 @@ search_method(1),
 distance_thresh(10.0f),
 accum_distance_thresh(15.0f),
 robust_kernel(0),
-robust_kernel_delta(0.05f)
+robust_kernel_delta(0.01f)
 {}
 
 AutomaticLoopCloseWindow::~AutomaticLoopCloseWindow() {

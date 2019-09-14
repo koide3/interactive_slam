@@ -17,6 +17,9 @@ class DrawableObject {
 
     using Ptr = std::shared_ptr<DrawableObject>;
 
+    DrawableObject() {}
+    virtual ~DrawableObject() {}
+
     virtual bool available() const = 0;
 
     virtual void draw(glk::GLSLShader& shader) = 0;

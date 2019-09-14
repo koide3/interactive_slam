@@ -92,6 +92,7 @@ add_executable(interactive_map_correction
   src/hdl_graph_slam/manual_loop_close_modal.cpp
   src/hdl_graph_slam/automatic_loop_close_window.cpp
   src/hdl_graph_slam/view/edge_view.cpp
+  src/hdl_graph_slam/view/plane_view.cpp
 )
 target_link_libraries(interactive_map_correction
   ${PCL_LIBRARIES}
