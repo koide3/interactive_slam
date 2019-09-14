@@ -68,8 +68,9 @@ target_link_libraries(imgui
 )
 
 add_library(guik STATIC
-  src/glk/lines.cpp
   src/glk/mesh.cpp
+  src/glk/lines.cpp
+  src/glk/colormap.cpp
   src/glk/glsl_shader.cpp
   src/glk/frame_buffer.cpp
   src/glk/pointcloud_buffer.cpp

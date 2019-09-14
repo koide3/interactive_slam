@@ -22,14 +22,16 @@ public:
   glk::PointCloudBuffer::Ptr cloud_buffer;
 };
 
-struct RANSACResult {
+struct PlaneDetectionResult {
 public:
-  using Ptr = std::shared_ptr<RANSACResult>;
+  using Ptr = std::shared_ptr<PlaneDetectionResult>;
 
   std::vector<InteractiveKeyFrame::Ptr> candidates;
+  std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> candidate_inliers;
+  std::vector<glk::PointCloudBuffer::Ptr> candidate_inlier_buffers;
+  std::vector<Eigen::Vector4f, Eigen::aligned_allocator<Eigen::Vector4f>> candidate_local_coeffs;
 
-  pcl::PointCloud<pcl::PointXYZI>::Ptr cloud;
-  glk::PointCloudBuffer::Ptr cloud_buffer;
+  Eigen::VectorXf coeffs;
 };
 
 class PlaneDetectionModal {
@@ -43,6 +45,8 @@ public:
   void set_center_point(const Eigen::Vector3f& point);
 
   RegionGrowingResult::Ptr region_growing();
+  PlaneDetectionResult::Ptr detect_plane(const RegionGrowingResult::Ptr& region_growing);
+  pcl::PointCloud<pcl::PointXYZI>::Ptr detect_plane_with_coeffs(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud, Eigen::Vector4f& coeffs);
 
   void draw_ui();
   void draw_gl(glk::GLSLShader& shader);
@@ -53,13 +57,18 @@ private:
 
   Eigen::Vector3f center_point;
 
+  float initial_neighbor_search_radius;
   int min_cluster_size;
   int max_cluster_size;
   int num_neighbors;
   float smoothness_threshold;
   float curvature_threshold;
 
+  float ransac_distance_thresh;
+  int min_plane_supports;
+
   RegionGrowingResult::Ptr region_growing_result;
+  PlaneDetectionResult::Ptr plane_detection_result;
 };
 
 }

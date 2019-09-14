@@ -4,8 +4,9 @@
 #include <chrono>
 #include <boost/filesystem.hpp>
 
-#include <g2o/types/slam3d/edge_se3.h>
 #include <g2o/core/sparse_optimizer.h>
+#include <g2o/types/slam3d/edge_se3.h>
+#include <g2o/types/slam3d_addons/vertex_plane.h>
 
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
@@ -74,6 +75,13 @@ namespace hdl_graph_slam {
     }
 
     return edge;
+  }
+
+  g2o::VertexPlane* InteractiveGraph::add_plane(const Eigen::Vector4d& coeffs) {
+    return add_plane_node(coeffs);
+  }
+  g2o::EdgeSE3Plane* InteractiveGraph::add_edge(const KeyFrame::Ptr& v_se3, g2o::VertexPlane* v_plane, const Eigen::Vector4d& coeffs, const Eigen::MatrixXd& information) {
+    return add_se3_plane_edge(v_se3->node, v_plane, coeffs, information);
   }
 
   void InteractiveGraph::optimize() {

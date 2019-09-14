@@ -24,6 +24,9 @@ public:
 
   g2o::EdgeSE3* add_edge(const KeyFrame::Ptr& key1, const KeyFrame::Ptr& key2, const Eigen::Isometry3d& relative_pose, const std::string& robust_kernel="NONE", double robust_kernel_delta=0.1);
 
+  g2o::VertexPlane* add_plane(const Eigen::Vector4d& coeffs);
+  g2o::EdgeSE3Plane* add_edge(const KeyFrame::Ptr& v_se3, g2o::VertexPlane* v_plane, const Eigen::Vector4d& coeffs, const Eigen::MatrixXd& information);
+
   void optimize();
 
   bool save_pointcloud(const std::string& filename);
