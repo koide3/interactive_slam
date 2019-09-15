@@ -44,7 +44,7 @@ public:
     line_buffer.add_line(p1, p2, c1, c2, info);
   }
 
-  static bool is_plane_edge(g2o::HyperGraph::Edge* edge) { return dynamic_cast<g2o::EdgePlane*>(edge) || dynamic_cast<g2o::EdgePlaneParallel*>(edge); }
+  static bool is_plane_edge(g2o::HyperGraph::Edge* edge) { return dynamic_cast<g2o::EdgePlane*>(edge) || dynamic_cast<g2o::EdgePlaneParallel*>(edge) || dynamic_cast<g2o::EdgePlanePerpendicular*>(edge); }
 
 private:
   g2o::VertexPlane* v1;

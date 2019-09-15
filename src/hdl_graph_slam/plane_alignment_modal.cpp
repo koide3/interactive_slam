@@ -53,6 +53,9 @@ bool PlaneAlignmentModal::run() {
         case 1:
           graph.add_edge_parallel(plane_begin->vertex_plane, plane_end->vertex_plane, information_scale);
           break;
+        case 2:
+          graph.add_edge_perpendicular(plane_begin->vertex_plane, plane_end->vertex_plane, information_scale);
+          break;
       }
       graph.optimize();
       close_window = true;

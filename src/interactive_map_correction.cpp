@@ -438,7 +438,7 @@ private:
 
   bool show_draw_config_window;
   DrawFlags draw_flags;
-};  // namespace hdl_graph_slam
+};
 
 }  // namespace hdl_graph_slam
 

@@ -34,6 +34,7 @@ public:
   g2o::EdgeSE3Plane* add_edge(const KeyFrame::Ptr& v_se3, g2o::VertexPlane* v_plane, const Eigen::Vector4d& coeffs, const Eigen::MatrixXd& information, const std::string& robust_kernel = "NONE", double robust_kernel_delta = 0.1);
 
   void add_edge_parallel(g2o::VertexPlane* v1, g2o::VertexPlane* v2, double information_scale);
+  void add_edge_perpendicular(g2o::VertexPlane* v1, g2o::VertexPlane* v2, double information_scale);
 
   void optimize();
 
