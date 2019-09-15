@@ -48,13 +48,32 @@ public:
     shader.set_uniform("color_mode", 1);
     shader.set_uniform("model_matrix", model_matrix);
     shader.set_uniform("material_color", Eigen::Vector4f(0.0f, 1.0f, 0.0f, 1.0f));
-    shader.set_uniform("info_values", Eigen::Vector4i(DrawableObject::VERTEX, vertex->id(), 0, 0));
+    shader.set_uniform("info_values", Eigen::Vector4i(VERTEX | PLANE, vertex->id(), 0, 0));
 
     auto& cube = glk::Primitives::instance()->primitive(glk::Primitives::CUBE);
     cube.draw(shader);
   }
 
-private:
+  virtual void draw(const DrawFlags& flags, glk::GLSLShader& shader, const Eigen::Vector4f& color, const Eigen::Matrix4f& model_matrix_) override {
+    VertexPlaneCache* cache = dynamic_cast<VertexPlaneCache*>(vertex_plane->userData());
+    cache->update();
+
+    if (!flags.draw_verticies || !flags.draw_plane_vertices) {
+      return;
+    }
+
+    Eigen::Matrix4f model_matrix = cache->pose().matrix().cast<float>() * model_matrix_;
+
+    shader.set_uniform("color_mode", 1);
+    shader.set_uniform("model_matrix", model_matrix);
+    shader.set_uniform("material_color", color);
+    shader.set_uniform("info_values", Eigen::Vector4i(VERTEX | PLANE, vertex->id(), 0, 0));
+
+    auto& cube = glk::Primitives::instance()->primitive(glk::Primitives::CUBE);
+    cube.draw(shader);
+  }
+
+public:
   g2o::VertexPlane* vertex_plane;
 };
 

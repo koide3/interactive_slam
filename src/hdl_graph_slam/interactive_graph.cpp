@@ -26,7 +26,9 @@ InteractiveGraph::InteractiveGraph() : GraphSLAM("lm_var"), iterations(0), chi2_
 
 InteractiveGraph::~InteractiveGraph() {}
 
-bool InteractiveGraph::load_map_data(const std::string& directory) {
+bool InteractiveGraph::load_map_data(const std::string& directory, guik::ProgressInterface& progress) {
+  progress.set_title("Opening " + directory);
+  progress.set_text("loading graph");
   if (!load(directory + "/graph.g2o")) {
     return false;
   }
@@ -36,14 +38,17 @@ bool InteractiveGraph::load_map_data(const std::string& directory) {
     edge->setId(edge_id_gen++);
   }
 
-  if (!load_keyframes(directory)) {
+  progress.increment();
+  progress.set_text("loading keyframes");
+  if (!load_keyframes(directory, progress)) {
     return false;
   }
 
   return true;
 }
 
-bool InteractiveGraph::load_keyframes(const std::string& directory) {
+bool InteractiveGraph::load_keyframes(const std::string& directory, guik::ProgressInterface& progress) {
+  progress.set_maximum(graph->vertices().size());
   for (int i = 0;; i++) {
     std::string keyframe_dir = (boost::format("%s/%06d") % directory % i).str();
     if (!boost::filesystem::is_directory(keyframe_dir)) {
@@ -58,6 +63,7 @@ bool InteractiveGraph::load_keyframes(const std::string& directory) {
     }
 
     keyframes[keyframe->id()] = keyframe;
+    progress.increment();
   }
 
   return true;
@@ -87,6 +93,8 @@ g2o::EdgeSE3Plane* InteractiveGraph::add_edge(const KeyFrame::Ptr& v_se3, g2o::V
   return edge;
 }
 
+void InteractiveGraph::add_edge_parallel(g2o::VertexPlane* v1, g2o::VertexPlane* v2, double information_scale) { add_plane_parallel_edge(v1, v2, Eigen::Vector3d::Zero(), Eigen::Matrix3d::Identity() * information_scale); }
+
 void InteractiveGraph::optimize() {
   g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
   auto t1 = std::chrono::high_resolution_clock::now();
@@ -97,6 +105,18 @@ void InteractiveGraph::optimize() {
 
   auto t2 = std::chrono::high_resolution_clock::now();
   elapsed_time_msec = std::chrono::duration_cast<std::chrono::seconds>(t2 - t1).count();
+}
+
+void InteractiveGraph::dump(const std::string& directory) {
+  save(directory + "/graph.g2o");
+
+  int keyframe_id = 0;
+  for (const auto& keyframe : keyframes) {
+    std::stringstream sst;
+    sst << boost::format("%s/%06d") % directory % (keyframe_id++);
+
+    keyframe.second->save(sst.str());
+  }
 }
 
 bool InteractiveGraph::save_pointcloud(const std::string& filename) {

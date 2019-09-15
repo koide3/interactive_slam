@@ -30,9 +30,10 @@ PlaneDetectionModal::PlaneDetectionModal(InteractiveGraphView& graph)
       smoothness_threshold(20.0f),
       curvature_threshold(0.5f),
       ransac_distance_thresh(0.25f),
-      min_plane_supports(30),
+      min_plane_supports(100),
       robust_kernel(1),
-      robust_kernel_delta(0.1f) {}
+      robust_kernel_delta(0.1f),
+      region_growing_progress_modal("region growing progress") {}
 
 PlaneDetectionModal::~PlaneDetectionModal() {}
 
@@ -44,11 +45,13 @@ void PlaneDetectionModal::set_center_point(const Eigen::Vector3f& point) {
 
 void PlaneDetectionModal::show() { show_window = true; }
 
-RegionGrowingResult::Ptr PlaneDetectionModal::region_growing() {
+RegionGrowingResult::Ptr PlaneDetectionModal::region_growing(guik::ProgressInterface& progress) {
   RegionGrowingResult::Ptr result(new RegionGrowingResult());
-
   pcl::PointCloud<pcl::PointXYZI>::Ptr accumulated_points(new pcl::PointCloud<pcl::PointXYZI>());
 
+  progress.set_maximum(5);
+  progress.set_text("accumulating points");
+  progress.increment();
   for (const auto& keyframe : graph.keyframes) {
     std::vector<int> neighbor_indices = keyframe.second->neighbors(center_point, initial_neighbor_search_radius);
     if (neighbor_indices.size() < 10) {
@@ -70,6 +73,8 @@ RegionGrowingResult::Ptr PlaneDetectionModal::region_growing() {
     }
   }
 
+  progress.set_text("normal estimation");
+  progress.increment();
   pcl::PointCloud<pcl::Normal>::Ptr accumulated_normals(new pcl::PointCloud<pcl::Normal>());
   pcl::NormalEstimation<pcl::PointXYZI, pcl::Normal> ne;
 
@@ -80,6 +85,8 @@ RegionGrowingResult::Ptr PlaneDetectionModal::region_growing() {
 
   ne.compute(*accumulated_normals);
 
+  progress.set_text("region growing");
+  progress.increment();
   pcl::RegionGrowing<pcl::PointXYZI, pcl::Normal> reg;
   reg.setMinClusterSize(min_cluster_size);
   reg.setMaxClusterSize(max_cluster_size);
@@ -100,6 +107,8 @@ RegionGrowingResult::Ptr PlaneDetectionModal::region_growing() {
   result->cloud.reset(new pcl::PointCloud<pcl::PointXYZI>());
   result->normals.reset(new pcl::PointCloud<pcl::Normal>());
 
+  progress.set_text("extract indices");
+  progress.increment();
   pcl::ExtractIndices<pcl::PointXYZI> extract;
   extract.setInputCloud(accumulated_points);
   extract.setIndices(cluster);
@@ -112,9 +121,10 @@ RegionGrowingResult::Ptr PlaneDetectionModal::region_growing() {
   extract_normals.setNegative(false);
   extract_normals.filter(*result->normals);
 
-  // result->plane_cloud = accumulated_points;
-  result->cloud_buffer = std::make_shared<glk::PointCloudBuffer>(result->cloud);
+  progress.set_text("done");
+  progress.increment();
 
+  // result->plane_cloud = accumulated_points;
   return result;
 }
 
@@ -211,7 +221,11 @@ void PlaneDetectionModal::draw_ui() {
   if (ImGui::Button("Perform")) {
     region_growing_result = nullptr;
     plane_detection_result = nullptr;
-    region_growing_result = region_growing();
+    region_growing_progress_modal.open<RegionGrowingResult::Ptr>([this](guik::ProgressInterface& progress) { return region_growing(progress); });
+  }
+  if (region_growing_progress_modal.run()) {
+    region_growing_result = region_growing_progress_modal.result<RegionGrowingResult::Ptr>();
+    region_growing_result->cloud_buffer = std::make_shared<glk::PointCloudBuffer>(region_growing_result->cloud);
   }
 
   if (region_growing_result) {
@@ -221,7 +235,7 @@ void PlaneDetectionModal::draw_ui() {
 
   ImGui::Text("RANSAC plane");
   ImGui::DragFloat("Distance thresh", &ransac_distance_thresh, 0.01f, 0.01f, 10.0f);
-  ImGui::DragInt("Min plane supports", &min_plane_supports, 1, 5, 100);
+  ImGui::DragInt("Min plane supports", &min_plane_supports, 10, 10, 10000);
 
   if (ImGui::Button("Detect")) {
     if (region_growing_result) {

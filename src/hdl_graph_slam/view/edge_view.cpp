@@ -4,6 +4,7 @@
 
 #include <hdl_graph_slam/view/line_buffer.hpp>
 #include <hdl_graph_slam/view/edge_se3_view.hpp>
+#include <hdl_graph_slam/view/edge_plane_view.hpp>
 #include <hdl_graph_slam/view/edge_se3_plane_view.hpp>
 
 namespace hdl_graph_slam {
@@ -21,6 +22,10 @@ EdgeView::Ptr EdgeView::create(g2o::HyperGraph::Edge* edge, LineBuffer& line_buf
 
   if (dynamic_cast<g2o::EdgeSE3Plane*>(edge)) {
     return std::make_shared<EdgeSE3PlaneView>(edge, line_buffer);
+  }
+
+  if (EdgePlaneView::is_plane_edge(edge)) {
+    return std::make_shared<EdgePlaneView>(edge, line_buffer);
   }
 
   return nullptr;

@@ -17,8 +17,10 @@ namespace hdl_graph_slam {
 
 class InteractiveGraphView : public InteractiveGraph {
 public:
-  InteractiveGraphView() { line_buffer.reset(new LineBuffer()); }
+  InteractiveGraphView() { }
   virtual ~InteractiveGraphView() override {}
+
+  void init_gl() { line_buffer.reset(new LineBuffer()); }
 
   void update_view() {
     bool keyframe_inserted = false;

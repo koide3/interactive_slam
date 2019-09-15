@@ -41,7 +41,7 @@ public:
 
     Eigen::Vector4f c1(1.0f, 0.0f, 0.0f, 1.0f);
     Eigen::Vector4f c2(0.0f, 1.0f, 0.0f, 1.0f);
-    Eigen::Vector4i info(DrawableObject::EDGE, edge->id(), 0, 0);
+    Eigen::Vector4i info(EDGE, edge->id(), 0, 0);
 
     line_buffer.add_line(p1, p2, c1, c2, info);
   }

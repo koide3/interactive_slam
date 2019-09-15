@@ -28,6 +28,9 @@ AutomaticLoopCloseWindow::AutomaticLoopCloseWindow(InteractiveGraphView& graph, 
 AutomaticLoopCloseWindow::~AutomaticLoopCloseWindow() {
   if (running) {
     running = false;
+  }
+
+  if (loop_detection_thread.joinable()) {
     loop_detection_thread.join();
   }
 }
@@ -43,14 +46,14 @@ void AutomaticLoopCloseWindow::draw_ui() {
   ImGui::Text("Scan matching");
   const char* methods[] = {"NDT"};
   ImGui::Combo("Method", &scan_matching_method, methods, IM_ARRAYSIZE(methods));
-  ImGui::DragFloat("Resolution", &scan_matching_resolution, 0.01f, 0.01f, 20.0f);
+  ImGui::DragFloat("Resolution", &scan_matching_resolution, 0.1f, 0.1f, 20.0f);
   ImGui::DragFloat("Fitness score thresh", &fitness_score_thresh, 0.01f, 0.01f, 10.0f);
 
   ImGui::Text("Loop detection");
   const char* search_methods[] = {"RANDOM", "SEQUENTIAL"};
   ImGui::Combo("Search method", &search_method, search_methods, IM_ARRAYSIZE(search_methods));
-  ImGui::DragFloat("Distance thresh", &distance_thresh, 0.01f, 0.01f, 100.0f);
-  ImGui::DragFloat("Accum distance thresh", &accum_distance_thresh, 0.01f, 0.01f, 100.0f);
+  ImGui::DragFloat("Distance thresh", &distance_thresh, 0.5f, 0.5f, 100.0f);
+  ImGui::DragFloat("Accum distance thresh", &accum_distance_thresh, 0.5f, 0.5f, 100.0f);
 
   ImGui::Text("Robust kernel");
   const char* kernels[] = {"NONE", "Huber"};
@@ -70,6 +73,11 @@ void AutomaticLoopCloseWindow::draw_ui() {
       running = false;
       loop_detection_thread.join();
     }
+  }
+
+  if (running) {
+    ImGui::SameLine();
+    ImGui::Text("%c Running", "|/-\\"[(int)(ImGui::GetTime() / 0.05f) & 3]);
   }
 
   ImGui::End();

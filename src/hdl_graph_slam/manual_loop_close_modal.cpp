@@ -78,87 +78,87 @@ bool ManualLoopCloseModal::run() {
       draw_canvas();
       ImGui::Image((void*)canvas->frame_buffer->color().id(), ImVec2(512, 512), ImVec2(0, 1), ImVec2(1, 0));
       ImGui::EndChild();
+
+      ImGui::Text("fitness_score:%.4f", fitness_score);
+
+      if (ImGui::Button("Auto align")) {
+        ImGui::OpenPopup("auto align");
+      }
+      auto_align();
+
+      ImGui::SameLine();
+      if (ImGui::Button("Scan matching")) {
+        ImGui::OpenPopup("scan matching");
+      }
+      scan_matching();
+
+      ImGui::SameLine();
+      ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.05f);
+      float px = 0.0f;
+      if (ImGui::DragFloat("##PX", &px, 0.01, 0.0f, 0.0f, "PX")) {
+        end_keyframe_pose.translation() += end_keyframe_pose.linear().block<3, 1>(0, 0) * px;
+        update_fitness_score();
+      }
+
+      ImGui::SameLine();
+      ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.05f);
+      float py = 0.0f;
+      if (ImGui::DragFloat("##PY", &py, 0.01, 0.0f, 0.0f, "PY")) {
+        end_keyframe_pose.translation() += end_keyframe_pose.linear().block<3, 1>(0, 1) * py;
+        update_fitness_score();
+      }
+
+      ImGui::SameLine();
+      ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.05f);
+      float pz = 0.0f;
+      if (ImGui::DragFloat("##PZ", &pz, 0.01, 0.0f, 0.0f, "PZ")) {
+        end_keyframe_pose.translation() += end_keyframe_pose.linear().block<3, 1>(0, 2) * pz;
+        update_fitness_score();
+      }
+
+      ImGui::SameLine();
+      ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.05f);
+      float rx = 0.0f;
+      if (ImGui::DragFloat("##RX", &rx, 0.01, 0.0f, 0.0f, "RX")) {
+        end_keyframe_pose = end_keyframe_pose * Eigen::AngleAxisd(rx, Eigen::Vector3d::UnitX());
+        update_fitness_score();
+      }
+
+      ImGui::SameLine();
+      ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.05f);
+      float ry = 0.0f;
+      if (ImGui::DragFloat("##RY", &ry, 0.01, 0.0f, 0.0f, "RY")) {
+        end_keyframe_pose = end_keyframe_pose * Eigen::AngleAxisd(ry, Eigen::Vector3d::UnitY());
+        update_fitness_score();
+      }
+
+      ImGui::SameLine();
+      ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.05f);
+      float rz = 0.0f;
+      if (ImGui::DragFloat("##RZ", &rz, 0.01, 0.0f, 0.0f, "RZ")) {
+        end_keyframe_pose = end_keyframe_pose * Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ());
+        update_fitness_score();
+      }
+
+      ImGui::SameLine();
+      if (ImGui::Button("Reset")) {
+        end_keyframe_pose = end_keyframe_pose_init;
+        update_fitness_score();
+      }
+
+      if (ImGui::Button("Add edge")) {
+        Eigen::Isometry3d relative = begin_keyframe_pose.inverse() * end_keyframe_pose;
+        graph.add_edge(begin_keyframe->lock(), end_keyframe->lock(), relative);
+        graph.optimize();
+
+        ImGui::CloseCurrentPopup();
+        begin_keyframe = nullptr;
+        end_keyframe = nullptr;
+        close_window = true;
+      }
+      ImGui::SameLine();
     }
 
-    ImGui::Text("fitness_score:%.4f", fitness_score);
-
-    if (ImGui::Button("Auto align")) {
-      ImGui::OpenPopup("auto align");
-    }
-    auto_align();
-
-    ImGui::SameLine();
-    if (ImGui::Button("Scan matching")) {
-      ImGui::OpenPopup("scan matching");
-    }
-    scan_matching();
-
-    ImGui::SameLine();
-    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.05f);
-    float px = 0.0f;
-    if (ImGui::DragFloat("##PX", &px, 0.01, 0.0f, 0.0f, "PX")) {
-      end_keyframe_pose.translation() += end_keyframe_pose.linear().block<3, 1>(0, 0) * px;
-      update_fitness_score();
-    }
-
-    ImGui::SameLine();
-    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.05f);
-    float py = 0.0f;
-    if (ImGui::DragFloat("##PY", &py, 0.01, 0.0f, 0.0f, "PY")) {
-      end_keyframe_pose.translation() += end_keyframe_pose.linear().block<3, 1>(0, 1) * py;
-      update_fitness_score();
-    }
-
-    ImGui::SameLine();
-    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.05f);
-    float pz = 0.0f;
-    if (ImGui::DragFloat("##PZ", &pz, 0.01, 0.0f, 0.0f, "PZ")) {
-      end_keyframe_pose.translation() += end_keyframe_pose.linear().block<3, 1>(0, 2) * pz;
-      update_fitness_score();
-    }
-
-    ImGui::SameLine();
-    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.05f);
-    float rx = 0.0f;
-    if (ImGui::DragFloat("##RX", &rx, 0.01, 0.0f, 0.0f, "RX")) {
-      end_keyframe_pose = end_keyframe_pose * Eigen::AngleAxisd(rx, Eigen::Vector3d::UnitX());
-      update_fitness_score();
-    }
-
-    ImGui::SameLine();
-    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.05f);
-    float ry = 0.0f;
-    if (ImGui::DragFloat("##RY", &ry, 0.01, 0.0f, 0.0f, "RY")) {
-      end_keyframe_pose = end_keyframe_pose * Eigen::AngleAxisd(ry, Eigen::Vector3d::UnitY());
-      update_fitness_score();
-    }
-
-    ImGui::SameLine();
-    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.05f);
-    float rz = 0.0f;
-    if (ImGui::DragFloat("##RZ", &rz, 0.01, 0.0f, 0.0f, "RZ")) {
-      end_keyframe_pose = end_keyframe_pose * Eigen::AngleAxisd(rz, Eigen::Vector3d::UnitZ());
-      update_fitness_score();
-    }
-
-    ImGui::SameLine();
-    if (ImGui::Button("Reset")) {
-      end_keyframe_pose = end_keyframe_pose_init;
-      update_fitness_score();
-    }
-
-    if (ImGui::Button("Add edge")) {
-      Eigen::Isometry3d relative = begin_keyframe_pose.inverse() * end_keyframe_pose;
-      graph.add_edge(begin_keyframe->lock(), end_keyframe->lock(), relative);
-      graph.optimize();
-
-      ImGui::CloseCurrentPopup();
-      begin_keyframe = nullptr;
-      end_keyframe = nullptr;
-      close_window = true;
-    }
-
-    ImGui::SameLine();
     if (ImGui::Button("Cancel")) {
       ImGui::CloseCurrentPopup();
       begin_keyframe = nullptr;

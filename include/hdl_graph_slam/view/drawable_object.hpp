@@ -18,6 +18,7 @@ public:
     draw_se3_edges = true;
     draw_se3_plane_edges = true;
     draw_floor_edges = false;
+    draw_plane_edges = true;
   }
 
   bool draw_verticies;
@@ -29,16 +30,12 @@ public:
   bool draw_se3_edges;
   bool draw_se3_plane_edges;
   bool draw_floor_edges;
+  bool draw_plane_edges;
 };
 
 class DrawableObject {
 public:
-  enum OBJECT_TYPE {
-    POINTS = 1,
-    KEYFRAME,
-    VERTEX,
-    EDGE,
-  };
+  enum OBJECT_TYPE { POINTS = 1, VERTEX = (1 << 1), EDGE = (1 << 2), KEYFRAME = (1 << 3), PLANE = (1 << 4) };
 
   using Ptr = std::shared_ptr<DrawableObject>;
 

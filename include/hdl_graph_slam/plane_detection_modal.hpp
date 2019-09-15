@@ -5,6 +5,7 @@
 #include <Eigen/Core>
 
 #include <guik/gl_canvas.hpp>
+#include <guik/progress_modal.hpp>
 #include <glk/pointcloud_buffer.hpp>
 #include <hdl_graph_slam/view/keyframe_view.hpp>
 #include <hdl_graph_slam/view/interactive_graph_view.hpp>
@@ -44,7 +45,7 @@ public:
   void show();
   void set_center_point(const Eigen::Vector3f& point);
 
-  RegionGrowingResult::Ptr region_growing();
+  RegionGrowingResult::Ptr region_growing(guik::ProgressInterface& progress);
   PlaneDetectionResult::Ptr detect_plane(const RegionGrowingResult::Ptr& region_growing);
   pcl::PointCloud<pcl::PointXYZI>::Ptr detect_plane_with_coeffs(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud, Eigen::Vector4f& coeffs);
 
@@ -70,6 +71,7 @@ private:
   int robust_kernel;
   float robust_kernel_delta;
 
+  guik::ProgressModal region_growing_progress_modal;
   RegionGrowingResult::Ptr region_growing_result;
   PlaneDetectionResult::Ptr plane_detection_result;
 };
