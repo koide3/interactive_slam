@@ -43,6 +43,7 @@ public:
   ~PlaneDetectionModal();
 
   void show();
+  void close();
   void set_center_point(const Eigen::Vector3f& point);
 
   RegionGrowingResult::Ptr region_growing(guik::ProgressInterface& progress);

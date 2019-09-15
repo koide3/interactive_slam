@@ -41,6 +41,11 @@ bool PlaneAlignmentModal::set_end_plane(int plane_id) {
   return true;
 }
 
+void PlaneAlignmentModal::close() {
+  plane_begin = nullptr;
+  plane_end = nullptr;
+}
+
 bool PlaneAlignmentModal::run() {
   bool close_window = false;
   if (ImGui::BeginPopupModal("plane alignment", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {

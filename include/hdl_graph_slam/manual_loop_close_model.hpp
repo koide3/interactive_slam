@@ -25,6 +25,8 @@ public:
 
   bool run();
 
+  void close();
+
   void draw_gl(glk::GLSLShader& shader);
 
   void draw_canvas();

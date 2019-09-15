@@ -45,6 +45,12 @@ void PlaneDetectionModal::set_center_point(const Eigen::Vector3f& point) {
 
 void PlaneDetectionModal::show() { show_window = true; }
 
+void PlaneDetectionModal::close() {
+  show_window = false;
+  region_growing_result = nullptr;
+  plane_detection_result = nullptr;
+}
+
 RegionGrowingResult::Ptr PlaneDetectionModal::region_growing(guik::ProgressInterface& progress) {
   RegionGrowingResult::Ptr result(new RegionGrowingResult());
   pcl::PointCloud<pcl::PointXYZI>::Ptr accumulated_points(new pcl::PointCloud<pcl::PointXYZI>());

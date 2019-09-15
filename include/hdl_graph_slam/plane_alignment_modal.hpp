@@ -24,6 +24,8 @@ public:
 
   bool run();
 
+  void close();
+
   void draw_gl(glk::GLSLShader& shader);
 
 private:

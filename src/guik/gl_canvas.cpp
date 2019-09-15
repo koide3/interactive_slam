@@ -61,7 +61,9 @@ bool GLCanvas::ready() const { return frame_buffer && shader && camera_control &
  */
 void GLCanvas::set_size(const Eigen::Vector2i& size) {
   this->size = size;
+  projection_control->set_size(size);
   frame_buffer.reset(new glk::FrameBuffer(size));
+  frame_buffer->add_color_buffer(GL_RGBA32I, GL_RGBA_INTEGER, GL_INT);
 }
 
 /**

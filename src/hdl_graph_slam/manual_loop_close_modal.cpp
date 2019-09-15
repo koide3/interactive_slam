@@ -57,6 +57,11 @@ bool ManualLoopCloseModal::set_end_keyframe(int keyframe_id) {
   return true;
 }
 
+void ManualLoopCloseModal::close() {
+  begin_keyframe = nullptr;
+  end_keyframe = nullptr;
+}
+
 bool ManualLoopCloseModal::run() {
   bool close_window = false;
   if (ImGui::BeginPopupModal("manual loop close", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {

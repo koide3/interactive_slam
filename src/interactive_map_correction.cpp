@@ -28,13 +28,14 @@ public:
       return false;
     }
 
+    framebuffer_size = size;
     right_clicked_pos.setZero();
     graph_load_progress.reset(new guik::ProgressModal("graph load modal"));
 
     std::string package_path = ros::package::getPath("interactive_map_correction");
     std::string data_directory = package_path + "/data";
 
-    main_canvas.reset(new guik::GLCanvas(data_directory, Eigen::Vector2i(1920, 1080)));
+    main_canvas.reset(new guik::GLCanvas(data_directory, size));
     if (!main_canvas->ready()) {
       close();
     }
@@ -114,6 +115,11 @@ public:
     glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
   }
 
+  virtual void framebuffer_size_callback(const Eigen::Vector2i& size) {
+    main_canvas->set_size(size);
+    framebuffer_size = size;
+  }
+
 private:
   void draw_flags_config() {
     if (!show_draw_config_window) {
@@ -149,20 +155,24 @@ private:
 
     bool open_map_dialog = false;
     if (ImGui::BeginMenu("File")) {
-      if (ImGui::MenuItem("Open..")) {
-        open_map_dialog = true;
+      if (ImGui::BeginMenu("Open")) {
+        if (ImGui::MenuItem("New")) {
+          open_map_dialog = true;
+        }
+        if (ImGui::MenuItem("Merge")) {
+          merge_map_data();
+        }
+        ImGui::EndMenu();
       }
 
-      if (ImGui::MenuItem("Merge Map")) {
-        merge_map_data();
-      }
-
-      if (ImGui::MenuItem("Save Map")) {
-        save_map_data();
-      }
-
-      if (ImGui::MenuItem("Export PointCloud")) {
-        export_pointcloud();
+      if (ImGui::BeginMenu("Save")) {
+        if (ImGui::MenuItem("Save map data")) {
+          save_map_data();
+        }
+        if (ImGui::MenuItem("Export PointCloud")) {
+          export_pointcloud();
+        }
+        ImGui::EndMenu();
       }
 
       if (ImGui::MenuItem("Close Map")) {
@@ -184,12 +194,16 @@ private:
       if (ImGui::MenuItem("Graph rendering setting")) {
         show_draw_config_window = true;
       }
+      if(ImGui::MenuItem("Clear selections")) {
+        clear_selections();
+      }
 
       ImGui::EndMenu();
     }
 
     if (ImGui::BeginMenu("Graph")) {
       if (ImGui::MenuItem("Automatic loop detection")) {
+        clear_selections();
         automatic_loop_close_window->show();
       }
 
@@ -204,6 +218,13 @@ private:
   }
 
 private:
+  void clear_selections() {
+    manual_loop_close_modal->close();
+    automatic_loop_close_window->close();
+    plane_detection_modal->close();
+    plane_alignment_modal->close();
+  }
+
   void open_map_data(bool open_dialog) {
     if (graph_load_progress->run()) {
       auto result = graph_load_progress->result<std::shared_ptr<InteractiveGraphView>>();
@@ -220,7 +241,7 @@ private:
       std::string package_path = ros::package::getPath("interactive_map_correction");
       std::string data_directory = package_path + "/data";
 
-      main_canvas.reset(new guik::GLCanvas(data_directory, Eigen::Vector2i(1920, 1080)));
+      main_canvas.reset(new guik::GLCanvas(data_directory, framebuffer_size));
       if (!main_canvas->ready()) {
         close();
       }
@@ -296,6 +317,9 @@ private:
     }
 
     auto result = dialog->result();
+    if(result.empty()) {
+      return;
+    }
 
     std::lock_guard<std::mutex> lock(graph->optimization_mutex);
     graph->dump(result);
@@ -330,7 +354,7 @@ private:
     std::string package_path = ros::package::getPath("interactive_map_correction");
     std::string data_directory = package_path + "/data";
 
-    main_canvas.reset(new guik::GLCanvas(data_directory, Eigen::Vector2i(1920, 1080)));
+    main_canvas.reset(new guik::GLCanvas(data_directory, framebuffer_size));
     if (!main_canvas->ready()) {
       close();
     }
@@ -372,6 +396,7 @@ private:
         ImGui::Text("Pos: %.3f %.3f %.3f", pos_3d[0], pos_3d[1], pos_3d[2]);
 
         if (ImGui::Button("Plane detection")) {
+          clear_selections();
           plane_detection_modal->set_center_point(pos_3d);
           plane_detection_modal->show();
           ImGui::CloseCurrentPopup();
@@ -391,6 +416,7 @@ private:
       if (picked_type & DrawableObject::KEYFRAME) {
         ImGui::Text("\nKeyframe");
         if (ImGui::Button("Loop begin")) {
+          clear_selections();
           manual_loop_close_modal->set_begin_keyframe(picked_id);
           ImGui::CloseCurrentPopup();
         }
@@ -403,6 +429,7 @@ private:
       if (picked_type & DrawableObject::PLANE) {
         ImGui::Text("\nPlane");
         if (ImGui::Button("Loop begin")) {
+          clear_selections();
           plane_alignment_modal->set_begin_plane(picked_id);
           ImGui::CloseCurrentPopup();
         }
@@ -425,6 +452,7 @@ private:
   }
 
 private:
+  Eigen::Vector2i framebuffer_size;
   Eigen::Vector2i right_clicked_pos;
   std::unique_ptr<guik::GLCanvas> main_canvas;
 

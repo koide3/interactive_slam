@@ -227,4 +227,13 @@ void AutomaticLoopCloseWindow::draw_gl(glk::GLSLShader& shader) {
 }
 
 void AutomaticLoopCloseWindow::show() { show_window = true; }
+
+void AutomaticLoopCloseWindow::close() {
+  if(running) {
+    running = false;
+    loop_detection_thread.join();
+  }
+  show_window = false;
+}
+
 }  // namespace hdl_graph_slam

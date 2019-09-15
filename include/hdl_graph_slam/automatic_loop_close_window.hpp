@@ -27,6 +27,8 @@ public:
 
   void start();
 
+  void close();
+
 private:
   void loop_detection();
   std::vector<KeyFrameView::Ptr> find_loop_candidates(const KeyFrameView::Ptr& keyframe);

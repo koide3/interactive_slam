@@ -33,6 +33,7 @@ public:
   void draw_ui();
   void show_projection_setting();
 
+
 public:
   Eigen::Vector2i size;
   std::unique_ptr<glk::GLSLShader> shader;

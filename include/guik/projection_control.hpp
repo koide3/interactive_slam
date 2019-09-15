@@ -12,6 +12,10 @@ public:
   ProjectionControl(const Eigen::Vector2i& size);
   ~ProjectionControl();
 
+  void set_size(const Eigen::Vector2i& size) {
+    this->size = size;
+  }
+
   Eigen::Matrix4f projection_matrix() const;
 
   void draw_ui();
