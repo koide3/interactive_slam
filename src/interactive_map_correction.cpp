@@ -156,10 +156,10 @@ private:
     bool open_map_dialog = false;
     if (ImGui::BeginMenu("File")) {
       if (ImGui::BeginMenu("Open")) {
-        if (ImGui::MenuItem("New")) {
+        if (ImGui::MenuItem("New map data")) {
           open_map_dialog = true;
         }
-        if (ImGui::MenuItem("Merge")) {
+        if (ImGui::MenuItem("Merge another map")) {
           merge_map_data();
         }
         ImGui::EndMenu();
