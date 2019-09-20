@@ -1,5 +1,5 @@
-#ifndef PLANE_DETECTION_MODAL_HPP
-#define PLANE_DETECTION_MODAL_HPP
+#ifndef PLANE_DETECTION_WINDOW_HPP
+#define PLANE_DETECTION_WINDOW_HPP
 
 #include <memory>
 #include <Eigen/Core>
@@ -35,12 +35,12 @@ public:
   Eigen::VectorXf coeffs;
 };
 
-class PlaneDetectionModal {
+class PlaneDetectionWindow {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  PlaneDetectionModal(InteractiveGraphView& graph);
-  ~PlaneDetectionModal();
+  PlaneDetectionWindow(std::shared_ptr<InteractiveGraphView>& graph);
+  ~PlaneDetectionWindow();
 
   void show();
   void close();
@@ -55,7 +55,7 @@ public:
 
 private:
   bool show_window;
-  InteractiveGraphView& graph;
+  std::shared_ptr<InteractiveGraphView>& graph;
 
   Eigen::Vector3f center_point;
 

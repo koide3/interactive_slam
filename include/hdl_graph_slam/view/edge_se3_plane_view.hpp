@@ -32,7 +32,7 @@ public:
 
     VertexPlaneCache* cache = dynamic_cast<VertexPlaneCache*>(v_plane->userData());
     if (cache == nullptr) {
-      std::cerr << "warning: vertex plane cache has not been created!!" << std::endl;
+      // std::cerr << "warning: vertex plane cache has not been created!!" << std::endl;
       return;
     }
 

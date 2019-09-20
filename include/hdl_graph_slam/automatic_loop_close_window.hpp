@@ -16,7 +16,7 @@ class AutomaticLoopCloseWindow {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  AutomaticLoopCloseWindow(InteractiveGraphView& graph, const std::string& data_directory);
+  AutomaticLoopCloseWindow(std::shared_ptr<InteractiveGraphView>& graph, const std::string& data_directory);
   ~AutomaticLoopCloseWindow();
 
   void draw_ui();
@@ -35,7 +35,7 @@ private:
 
 private:
   bool show_window;
-  InteractiveGraphView& graph;
+  std::shared_ptr<InteractiveGraphView>& graph;
 
   std::mutex loop_detection_mutex;
   std::thread loop_detection_thread;

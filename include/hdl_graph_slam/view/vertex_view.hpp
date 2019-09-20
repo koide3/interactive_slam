@@ -20,6 +20,8 @@ public:
 
   long id() const { return vertex->id(); }
 
+  virtual void context_menu();
+
 private:
   VertexView();
 

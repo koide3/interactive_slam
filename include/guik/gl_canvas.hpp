@@ -18,6 +18,7 @@ public:
 
   bool ready() const;
 
+  void reset_camera();
   void set_size(const Eigen::Vector2i& size);
   void mouse_control();
 

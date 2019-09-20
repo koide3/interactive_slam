@@ -5,16 +5,19 @@
 #include <glk/pointcloud_buffer.hpp>
 #include <glk/primitives/primitives.hpp>
 
+#include <g2o/types/slam3d/vertex_se3.h>
+#include <hdl_graph_slam/view/vertex_view.hpp>
 #include <hdl_graph_slam/interactive_keyframe.hpp>
-#include <hdl_graph_slam/view/drawable_object.hpp>
 
 namespace hdl_graph_slam {
 
-class KeyFrameView : public DrawableObject {
+class KeyFrameView : public VertexView {
 public:
   using Ptr = std::shared_ptr<KeyFrameView>;
 
-  KeyFrameView(const InteractiveKeyFrame::Ptr& kf) {
+  KeyFrameView(const InteractiveKeyFrame::Ptr& kf)
+  : VertexView(kf->node)
+  {
     keyframe = kf;
 
     std::cout << kf->id() << " : ";

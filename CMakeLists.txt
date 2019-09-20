@@ -88,7 +88,9 @@ add_executable(interactive_map_correction
   src/interactive_map_correction.cpp
   src/hdl_graph_slam/interactive_graph.cpp
   src/hdl_graph_slam/interactive_keyframe.cpp
-  src/hdl_graph_slam/plane_detection_modal.cpp
+  src/hdl_graph_slam/version_modal.cpp
+  src/hdl_graph_slam/graph_edit_window.cpp
+  src/hdl_graph_slam/plane_detection_window.cpp
   src/hdl_graph_slam/plane_alignment_modal.cpp
   src/hdl_graph_slam/manual_loop_close_modal.cpp
   src/hdl_graph_slam/automatic_loop_close_window.cpp

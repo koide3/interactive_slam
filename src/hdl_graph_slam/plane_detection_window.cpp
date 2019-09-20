@@ -1,4 +1,4 @@
-#include <hdl_graph_slam/plane_detection_modal.hpp>
+#include <hdl_graph_slam/plane_detection_window.hpp>
 
 #include <glk/colormap.hpp>
 #include <glk/primitives/primitives.hpp>
@@ -19,7 +19,7 @@
 
 namespace hdl_graph_slam {
 
-PlaneDetectionModal::PlaneDetectionModal(InteractiveGraphView& graph)
+PlaneDetectionWindow::PlaneDetectionWindow(std::shared_ptr<InteractiveGraphView>& graph)
     : show_window(false),
       graph(graph),
       center_point(0.0f, 0.0f, 0.0f),
@@ -27,7 +27,7 @@ PlaneDetectionModal::PlaneDetectionModal(InteractiveGraphView& graph)
       min_cluster_size(50),
       max_cluster_size(10000),
       num_neighbors(10),
-      smoothness_threshold(20.0f),
+      smoothness_threshold(10.0f),
       curvature_threshold(0.5f),
       ransac_distance_thresh(0.25f),
       min_plane_supports(100),
@@ -35,30 +35,30 @@ PlaneDetectionModal::PlaneDetectionModal(InteractiveGraphView& graph)
       robust_kernel_delta(0.1f),
       region_growing_progress_modal("region growing progress") {}
 
-PlaneDetectionModal::~PlaneDetectionModal() {}
+PlaneDetectionWindow::~PlaneDetectionWindow() {}
 
-void PlaneDetectionModal::set_center_point(const Eigen::Vector3f& point) {
+void PlaneDetectionWindow::set_center_point(const Eigen::Vector3f& point) {
   region_growing_result = nullptr;
   plane_detection_result = nullptr;
   center_point = point;
 }
 
-void PlaneDetectionModal::show() { show_window = true; }
+void PlaneDetectionWindow::show() { show_window = true; }
 
-void PlaneDetectionModal::close() {
+void PlaneDetectionWindow::close() {
   show_window = false;
   region_growing_result = nullptr;
   plane_detection_result = nullptr;
 }
 
-RegionGrowingResult::Ptr PlaneDetectionModal::region_growing(guik::ProgressInterface& progress) {
+RegionGrowingResult::Ptr PlaneDetectionWindow::region_growing(guik::ProgressInterface& progress) {
   RegionGrowingResult::Ptr result(new RegionGrowingResult());
   pcl::PointCloud<pcl::PointXYZI>::Ptr accumulated_points(new pcl::PointCloud<pcl::PointXYZI>());
 
   progress.set_maximum(5);
   progress.set_text("accumulating points");
   progress.increment();
-  for (const auto& keyframe : graph.keyframes) {
+  for (const auto& keyframe : graph->keyframes) {
     std::vector<int> neighbor_indices = keyframe.second->neighbors(center_point, initial_neighbor_search_radius);
     if (neighbor_indices.size() < 10) {
       continue;
@@ -77,6 +77,11 @@ RegionGrowingResult::Ptr PlaneDetectionModal::region_growing(guik::ProgressInter
     for (int i = 0; i < cloud->size(); i++) {
       accumulated_points->push_back(cloud->at(i));
     }
+  }
+
+  if(accumulated_points->size() < 50) {
+    std::cerr << "too few points for region growing" << std::endl;
+    return nullptr;
   }
 
   progress.set_text("normal estimation");
@@ -134,7 +139,7 @@ RegionGrowingResult::Ptr PlaneDetectionModal::region_growing(guik::ProgressInter
   return result;
 }
 
-PlaneDetectionResult::Ptr PlaneDetectionModal::detect_plane(const RegionGrowingResult::Ptr& rg_result) {
+PlaneDetectionResult::Ptr PlaneDetectionWindow::detect_plane(const RegionGrowingResult::Ptr& rg_result) {
   pcl::SampleConsensusModelPlane<pcl::PointXYZI>::Ptr model_p(new pcl::SampleConsensusModelPlane<pcl::PointXYZI>(rg_result->cloud));
   pcl::RandomSampleConsensus<pcl::PointXYZI> ransac(model_p);
   ransac.setDistanceThreshold(ransac_distance_thresh);
@@ -168,7 +173,7 @@ PlaneDetectionResult::Ptr PlaneDetectionModal::detect_plane(const RegionGrowingR
   return result;
 }
 
-pcl::PointCloud<pcl::PointXYZI>::Ptr PlaneDetectionModal::detect_plane_with_coeffs(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud, Eigen::Vector4f& coeffs) {
+pcl::PointCloud<pcl::PointXYZI>::Ptr PlaneDetectionWindow::detect_plane_with_coeffs(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud, Eigen::Vector4f& coeffs) {
   pcl::SampleConsensusModelPlane<pcl::PointXYZI>::Ptr model_p(new pcl::SampleConsensusModelPlane<pcl::PointXYZI>(cloud));
   pcl::PointIndices::Ptr init_indices(new pcl::PointIndices);
   model_p->selectWithinDistance(coeffs, ransac_distance_thresh, init_indices->indices);
@@ -208,7 +213,7 @@ pcl::PointCloud<pcl::PointXYZI>::Ptr PlaneDetectionModal::detect_plane_with_coef
   return inliers;
 }
 
-void PlaneDetectionModal::draw_ui() {
+void PlaneDetectionWindow::draw_ui() {
   if (!show_window) {
     region_growing_result.reset();
     return;
@@ -227,9 +232,9 @@ void PlaneDetectionModal::draw_ui() {
   if (ImGui::Button("Perform")) {
     region_growing_result = nullptr;
     plane_detection_result = nullptr;
-    region_growing_progress_modal.open<RegionGrowingResult::Ptr>([this](guik::ProgressInterface& progress) { return region_growing(progress); });
+    region_growing_progress_modal.open<RegionGrowingResult::Ptr>("region growing", [this](guik::ProgressInterface& progress) { return region_growing(progress); });
   }
-  if (region_growing_progress_modal.run()) {
+  if (region_growing_progress_modal.run("region growing")) {
     region_growing_result = region_growing_progress_modal.result<RegionGrowingResult::Ptr>();
     region_growing_result->cloud_buffer = std::make_shared<glk::PointCloudBuffer>(region_growing_result->cloud);
   }
@@ -263,17 +268,17 @@ void PlaneDetectionModal::draw_ui() {
 
   if (ImGui::Button("Add edge")) {
     if (plane_detection_result) {
-      auto plane_vertex = graph.add_plane(plane_detection_result->coeffs.cast<double>());
+      auto plane_vertex = graph->add_plane(plane_detection_result->coeffs.cast<double>());
 
       for (int i = 0; i < plane_detection_result->candidates.size(); i++) {
         const auto& candidate = plane_detection_result->candidates[i];
         const Eigen::Vector4f& coeffs = plane_detection_result->candidate_local_coeffs[i];
 
         Eigen::Matrix3d information = Eigen::Matrix3d::Identity();
-        graph.add_edge(candidate, plane_vertex, coeffs.cast<double>(), information, kernels[robust_kernel], robust_kernel_delta);
+        graph->add_edge(candidate, plane_vertex, coeffs.cast<double>(), information, kernels[robust_kernel], robust_kernel_delta);
       }
 
-      graph.optimize();
+      graph->optimize();
       show_window = false;
     }
   }
@@ -281,7 +286,7 @@ void PlaneDetectionModal::draw_ui() {
   ImGui::End();
 }
 
-void PlaneDetectionModal::draw_gl(glk::GLSLShader& shader) {
+void PlaneDetectionWindow::draw_gl(glk::GLSLShader& shader) {
   if (!show_window) {
     region_growing_result = nullptr;
     plane_detection_result = nullptr;

@@ -28,7 +28,7 @@ public:
     Eigen::Vector3f p1 = v1->estimate().translation().cast<float>();
     Eigen::Vector3f p2 = v2->estimate().translation().cast<float>();
 
-    Eigen::Vector4f color(1.0f, 0.0f, 0.0f, 1.0f);
+    Eigen::Vector4f color(0.95f, 0.0f, 0.0f, 1.0f);
     Eigen::Vector4i info(EDGE, edge->id(), 0, 0);
 
     line_buffer.add_line(p1, p2, color, color, info);

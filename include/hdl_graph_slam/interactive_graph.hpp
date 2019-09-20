@@ -27,6 +27,7 @@ public:
   virtual ~InteractiveGraph();
 
   bool load_map_data(const std::string& directory, guik::ProgressInterface& progress);
+  bool merge_map_data(InteractiveGraph& graph_, const InteractiveKeyFrame::Ptr& key1, const InteractiveKeyFrame::Ptr& key2, const Eigen::Isometry3d& relative_pose);
 
   g2o::EdgeSE3* add_edge(const KeyFrame::Ptr& key1, const KeyFrame::Ptr& key2, const Eigen::Isometry3d& relative_pose, const std::string& robust_kernel = "NONE", double robust_kernel_delta = 0.1);
 
@@ -38,9 +39,8 @@ public:
 
   void optimize();
 
-  void dump(const std::string& directory);
-
-  bool save_pointcloud(const std::string& filename);
+  void dump(const std::string& directory, guik::ProgressInterface& progress);
+  bool save_pointcloud(const std::string& filename, guik::ProgressInterface& progress);
 
   using GraphSLAM::graph;
   using GraphSLAM::num_edges;

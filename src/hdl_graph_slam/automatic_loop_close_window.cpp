@@ -10,7 +10,7 @@
 
 namespace hdl_graph_slam {
 
-AutomaticLoopCloseWindow::AutomaticLoopCloseWindow(InteractiveGraphView& graph, const std::string& data_directory)
+AutomaticLoopCloseWindow::AutomaticLoopCloseWindow(std::shared_ptr<InteractiveGraphView>& graph, const std::string& data_directory)
     : show_window(false),
       graph(graph),
       running(false),
@@ -90,7 +90,7 @@ void AutomaticLoopCloseWindow::loop_detection() {
   registration = ndt;
 
   while (running) {
-    KeyFrameView::Ptr source = graph.keyframes_view[loop_detection_source];
+    KeyFrameView::Ptr source = graph->keyframes_view[loop_detection_source];
     Eigen::Isometry3d source_pose = source->lock()->node->estimate();
     auto candidates = find_loop_candidates(source);
 
@@ -116,21 +116,21 @@ void AutomaticLoopCloseWindow::loop_detection() {
         const char* kernels[] = {"NONE", "Huber"};
 
         edge_inserted = true;
-        auto edge = graph.add_edge(source->lock(), candidates[i]->lock(), relative, kernels[robust_kernel], robust_kernel_delta);
+        auto edge = graph->add_edge(source->lock(), candidates[i]->lock(), relative, kernels[robust_kernel], robust_kernel_delta);
       }
     }
 
     if (edge_inserted) {
-      std::lock_guard<std::mutex> lock(graph.optimization_mutex);
-      graph.optimize();
+      std::lock_guard<std::mutex> lock(graph->optimization_mutex);
+      graph->optimize();
     }
 
     loop_detection_source++;
     if (search_method == 0) {
-      loop_detection_source = rand() % graph.keyframes_view.size();
+      loop_detection_source = rand() % graph->keyframes_view.size();
     }
 
-    loop_detection_source = loop_detection_source % graph.keyframes_view.size();
+    loop_detection_source = loop_detection_source % graph->keyframes_view.size();
   }
 }
 
@@ -156,7 +156,7 @@ std::vector<KeyFrameView::Ptr> AutomaticLoopCloseWindow::find_loop_candidates(co
       g2o::VertexSE3* v2 = dynamic_cast<g2o::VertexSE3*>(edge->vertices()[1]);
 
       g2o::VertexSE3* next = (v1->id() == target->node->id()) ? v2 : v1;
-      if (graph.keyframes.find(next->id()) == graph.keyframes.end()) {
+      if (graph->keyframes.find(next->id()) == graph->keyframes.end()) {
         continue;
       }
 
@@ -166,7 +166,7 @@ std::vector<KeyFrameView::Ptr> AutomaticLoopCloseWindow::find_loop_candidates(co
       auto found = accum_distances.find(next->id());
       if (found == accum_distances.end() || found->second > accum_distance) {
         accum_distances[next->id()] = accum_distance;
-        search_queue.push_back(graph.keyframes_view_map[graph.keyframes[next->id()]]);
+        search_queue.push_back(graph->keyframes_view_map[graph->keyframes[next->id()]]);
       }
     }
   }
@@ -184,7 +184,7 @@ std::vector<KeyFrameView::Ptr> AutomaticLoopCloseWindow::find_loop_candidates(co
 
   Eigen::Vector3d keyframe_pos = keyframe->lock()->node->estimate().translation();
   std::vector<KeyFrameView::Ptr> loop_candidates;
-  for (const auto& candidate : graph.keyframes_view) {
+  for (const auto& candidate : graph->keyframes_view) {
     if (excluded_edges.find(candidate->lock()->id()) != excluded_edges.end()) {
       continue;
     }
@@ -229,6 +229,9 @@ void AutomaticLoopCloseWindow::draw_gl(glk::GLSLShader& shader) {
 void AutomaticLoopCloseWindow::show() { show_window = true; }
 
 void AutomaticLoopCloseWindow::close() {
+  loop_source = nullptr;
+  loop_candidates.clear();
+
   if(running) {
     running = false;
     loop_detection_thread.join();

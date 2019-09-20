@@ -14,12 +14,14 @@ class EdgeView : public DrawableObject {
 public:
   using Ptr = std::shared_ptr<EdgeView>;
 
+  static EdgeView::Ptr create(g2o::HyperGraph::Edge* edge, LineBuffer& line_buffer);
+
   EdgeView(g2o::HyperGraph::Edge* edge, LineBuffer& line_buffer);
   virtual ~EdgeView();
 
-  static EdgeView::Ptr create(g2o::HyperGraph::Edge* edge, LineBuffer& line_buffer);
-
   long id() const;
+
+  virtual void context_menu();
 
 private:
   EdgeView();

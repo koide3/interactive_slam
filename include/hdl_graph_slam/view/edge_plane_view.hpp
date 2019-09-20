@@ -23,13 +23,13 @@ public:
   virtual bool available() const override { return true; }
 
   virtual void draw(const DrawFlags& flags, glk::GLSLShader& shader) override {
-    if (!flags.draw_edges || !flags.draw_plane_edges) {
+    if(!flags.draw_edges || !flags.draw_plane_edges) {
       return;
     }
 
     VertexPlaneCache* cache1 = dynamic_cast<VertexPlaneCache*>(v1->userData());
     VertexPlaneCache* cache2 = dynamic_cast<VertexPlaneCache*>(v2->userData());
-    if (cache1 == nullptr || cache2 == nullptr) {
+    if(cache1 == nullptr || cache2 == nullptr) {
       std::cerr << "warning: vertex plane cache has not been created!!" << std::endl;
       return;
     }
@@ -44,7 +44,9 @@ public:
     line_buffer.add_line(p1, p2, c1, c2, info);
   }
 
-  static bool is_plane_edge(g2o::HyperGraph::Edge* edge) { return dynamic_cast<g2o::EdgePlane*>(edge) || dynamic_cast<g2o::EdgePlaneParallel*>(edge) || dynamic_cast<g2o::EdgePlanePerpendicular*>(edge); }
+  static bool is_plane_edge(g2o::HyperGraph::Edge* edge) {
+    return dynamic_cast<g2o::EdgePlane*>(edge) || dynamic_cast<g2o::EdgePlaneParallel*>(edge) || dynamic_cast<g2o::EdgePlanePerpendicular*>(edge);
+  }
 
 private:
   g2o::VertexPlane* v1;

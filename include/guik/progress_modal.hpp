@@ -23,22 +23,26 @@ public:
     }
   }
 
-  virtual void set_title(const std::string& title) {
+  virtual void set_title(const std::string& title) override {
     std::lock_guard<std::mutex> lock(mutex);
     this->title = title;
   }
 
-  virtual void set_text(const std::string& text) {
+  virtual void set_text(const std::string& text) override {
     std::lock_guard<std::mutex> lock(mutex);
     this->text = text;
   }
 
-  virtual void set_maximum(int max) { this->max = max; }
-  virtual void set_current(int current) { this->current = current; }
-  virtual void increment() { current++; }
+  virtual void set_maximum(int max) override { this->max = max; }
+  virtual void set_current(int current) override { this->current = current; }
+  virtual void increment() override { current++; }
 
   template <typename T>
-  void open(const std::function<T(ProgressInterface& progress)>& task) {
+  void open(const std::string& task_name, const std::function<T(ProgressInterface& progress)>& task) {
+    this->task_name = task_name;
+    this->title.clear();
+    this->text.clear();
+
     ImGui::OpenPopup(modal_name.c_str());
     result_.clear();
     running = true;
@@ -57,7 +61,11 @@ public:
     return ret;
   }
 
-  bool run() {
+  bool run(const std::string& task_name) {
+    if(task_name != this->task_name) {
+      return false;
+    }
+
     bool terminated = false;
     if (ImGui::BeginPopupModal(modal_name.c_str(), nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar)) {
       {
@@ -92,6 +100,8 @@ private:
   std::atomic_bool running;
   std::atomic_int max;
   std::atomic_int current;
+
+  std::string task_name;
 
   std::thread thread;
   boost::any result_;

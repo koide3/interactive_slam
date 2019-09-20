@@ -54,6 +54,11 @@ GLCanvas::GLCanvas(const std::string& data_directory, const Eigen::Vector2i& siz
  */
 bool GLCanvas::ready() const { return frame_buffer && shader && camera_control && texture_renderer; }
 
+void GLCanvas::reset_camera() {
+  camera_control.reset(new guik::ArcCameraControl());
+  projection_control.reset(new guik::ProjectionControl(size));
+}
+
 /**
  * @brief Set the Size object
  *

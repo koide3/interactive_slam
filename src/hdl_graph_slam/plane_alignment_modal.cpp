@@ -4,12 +4,12 @@
 
 namespace hdl_graph_slam {
 
-PlaneAlignmentModal::PlaneAlignmentModal(InteractiveGraphView& graph) : graph(graph), plane_mode(1), information_scale(100.0f) {}
+PlaneAlignmentModal::PlaneAlignmentModal(std::shared_ptr<InteractiveGraphView>& graph) : graph(graph), plane_mode(1), information_scale(100.0f) {}
 PlaneAlignmentModal::~PlaneAlignmentModal() {}
 
 bool PlaneAlignmentModal::set_begin_plane(int plane_id) {
-  auto found = graph.graph->vertices().find(plane_id);
-  if (found == graph.graph->vertices().end()) {
+  auto found = graph->graph->vertices().find(plane_id);
+  if (found == graph->graph->vertices().end()) {
     std::cerr << "vertex id " << plane_id << " not found" << std::endl;
     return false;
   }
@@ -25,8 +25,8 @@ bool PlaneAlignmentModal::set_begin_plane(int plane_id) {
 }
 
 bool PlaneAlignmentModal::set_end_plane(int plane_id) {
-  auto found = graph.graph->vertices().find(plane_id);
-  if (found == graph.graph->vertices().end()) {
+  auto found = graph->graph->vertices().find(plane_id);
+  if (found == graph->graph->vertices().end()) {
     std::cerr << "vertex id " << plane_id << " not found" << std::endl;
     return false;
   }
@@ -56,13 +56,13 @@ bool PlaneAlignmentModal::run() {
     if (ImGui::Button("Add Edge")) {
       switch (plane_mode) {
         case 1:
-          graph.add_edge_parallel(plane_begin->vertex_plane, plane_end->vertex_plane, information_scale);
+          graph->add_edge_parallel(plane_begin->vertex_plane, plane_end->vertex_plane, information_scale);
           break;
         case 2:
-          graph.add_edge_perpendicular(plane_begin->vertex_plane, plane_end->vertex_plane, information_scale);
+          graph->add_edge_perpendicular(plane_begin->vertex_plane, plane_end->vertex_plane, information_scale);
           break;
       }
-      graph.optimize();
+      graph->optimize();
       close_window = true;
     }
 

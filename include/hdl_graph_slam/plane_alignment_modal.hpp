@@ -16,7 +16,7 @@ namespace hdl_graph_slam {
 
 class PlaneAlignmentModal {
 public:
-  PlaneAlignmentModal(InteractiveGraphView& graph);
+  PlaneAlignmentModal(std::shared_ptr<InteractiveGraphView>& graph);
   ~PlaneAlignmentModal();
 
   bool set_begin_plane(int plane_id);
@@ -29,7 +29,7 @@ public:
   void draw_gl(glk::GLSLShader& shader);
 
 private:
-  InteractiveGraphView& graph;
+  const std::shared_ptr<InteractiveGraphView>& graph;
 
   std::unique_ptr<VertexPlaneView> plane_begin;
   std::unique_ptr<VertexPlaneView> plane_end;

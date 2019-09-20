@@ -32,6 +32,9 @@ public:
         keyframes_view.push_back(std::make_shared<KeyFrameView>(keyframe));
         keyframes_view_map[keyframe] = keyframes_view.back();
 
+        vertices_view.push_back(keyframes_view.back());
+        vertices_view_map[keyframe->id()] = keyframes_view.back();
+
         drawables.push_back(keyframes_view.back());
       }
     }

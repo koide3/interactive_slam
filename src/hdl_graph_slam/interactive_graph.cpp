@@ -7,6 +7,7 @@
 #include <g2o/types/slam3d/edge_se3.h>
 #include <g2o/types/slam3d_addons/vertex_plane.h>
 #include <g2o/edge_se3_plane.hpp>
+#include <g2o/edge_plane_parallel.hpp>
 
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
@@ -43,6 +44,51 @@ bool InteractiveGraph::load_map_data(const std::string& directory, guik::Progres
   if (!load_keyframes(directory, progress)) {
     return false;
   }
+
+  return true;
+}
+
+bool InteractiveGraph::merge_map_data(InteractiveGraph& graph_, const InteractiveKeyFrame::Ptr& key1, const InteractiveKeyFrame::Ptr& key2, const Eigen::Isometry3d& relative_pose) {
+  long max_vertex_id = 0;
+  long max_edge_id = 0;
+
+  for(const auto& vertex: graph->vertices()) {
+    max_vertex_id = std::max<long>(max_vertex_id, vertex.first);
+  }
+  for(const auto& edge: graph->edges()) {
+    max_edge_id = std::max<long>(max_edge_id, edge->id());
+  }
+
+  std::unordered_map<long, g2o::HyperGraph::Vertex*> new_vertices_map;
+
+  int n = 0;
+  for(const auto& vertex : graph_.graph->vertices()) {
+    long new_vertex_id = ++max_vertex_id;
+
+    auto ele = vertex.second->clone();
+    std::cout << int(ele != nullptr) << std::endl;
+    // auto cloned = dynamic_cast<g2o::HyperGraph::Vertex*>(ele);
+    auto cloned = vertex.second;
+    new_vertices_map[vertex.first] = cloned;
+    cloned->setId(new_vertex_id);
+    graph->addVertex(cloned);
+  }
+
+  for(const auto& edge : graph_.graph->edges()) {
+    long new_edge_id = ++max_edge_id;
+    // g2o::HyperGraph::Edge* cloned = dynamic_cast<g2o::HyperGraph::Edge*>(edge->clone());
+    edge->setId(new_edge_id);
+    graph->addEdge(edge);
+  }
+
+  for(const auto& keyframe : graph_.keyframes) {
+    keyframe.second->node = dynamic_cast<g2o::VertexSE3*>(new_vertices_map[keyframe.second->id()]);
+    assert(keyframe.second->node);
+    keyframes[keyframe.second->id()] = keyframe.second;
+  }
+
+  std::cout << "edge between " << key1->id() << " and " << key2->id() << std::endl;
+  add_se3_edge(key1->node, key2->node, relative_pose, Eigen::MatrixXd::Identity(6, 6));
 
   return true;
 }
@@ -93,9 +139,15 @@ g2o::EdgeSE3Plane* InteractiveGraph::add_edge(const KeyFrame::Ptr& v_se3, g2o::V
   return edge;
 }
 
-void InteractiveGraph::add_edge_parallel(g2o::VertexPlane* v1, g2o::VertexPlane* v2, double information_scale) { add_plane_parallel_edge(v1, v2, Eigen::Vector3d::Zero(), Eigen::Matrix3d::Identity() * information_scale); }
+void InteractiveGraph::add_edge_parallel(g2o::VertexPlane* v1, g2o::VertexPlane* v2, double information_scale) {
+  auto edge = add_plane_parallel_edge(v1, v2, Eigen::Vector3d::Zero(), Eigen::Matrix3d::Identity() * information_scale);
+  edge->setId(edge_id_gen++);
+}
 
-void InteractiveGraph::add_edge_perpendicular(g2o::VertexPlane* v1, g2o::VertexPlane* v2, double information_scale) { add_plane_perpendicular_edge(v1, v2, Eigen::Vector3d::Zero(), Eigen::Matrix3d::Identity() * information_scale); }
+void InteractiveGraph::add_edge_perpendicular(g2o::VertexPlane* v1, g2o::VertexPlane* v2, double information_scale) {
+  auto edge = add_plane_perpendicular_edge(v1, v2, Eigen::Vector3d::Zero(), Eigen::Matrix3d::Identity() * information_scale);
+  edge->setId(edge_id_gen++);
+}
 
 void InteractiveGraph::optimize() {
   g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
@@ -109,21 +161,33 @@ void InteractiveGraph::optimize() {
   elapsed_time_msec = std::chrono::duration_cast<std::chrono::seconds>(t2 - t1).count();
 }
 
-void InteractiveGraph::dump(const std::string& directory) {
+void InteractiveGraph::dump(const std::string& directory, guik::ProgressInterface& progress) {
+  progress.set_maximum(keyframes.size());
+  progress.set_text("saving graph");
+  progress.increment();
+
   save(directory + "/graph.g2o");
+
+  progress.set_text("saving keyframes");
 
   int keyframe_id = 0;
   for (const auto& keyframe : keyframes) {
+    progress.increment();
+
     std::stringstream sst;
     sst << boost::format("%s/%06d") % directory % (keyframe_id++);
-
     keyframe.second->save(sst.str());
   }
 }
 
-bool InteractiveGraph::save_pointcloud(const std::string& filename) {
+bool InteractiveGraph::save_pointcloud(const std::string& filename, guik::ProgressInterface& progress) {
+  progress.set_maximum(keyframes.size() + 1);
+  progress.set_text("accumulate points");
+
   pcl::PointCloud<pcl::PointXYZI>::Ptr accumulated(new pcl::PointCloud<pcl::PointXYZI>());
   for (const auto& keyframe : keyframes) {
+    progress.increment();
+
     pcl::PointCloud<pcl::PointXYZI>::Ptr transformed(new pcl::PointCloud<pcl::PointXYZI>());
     pcl::transformPointCloud(*keyframe.second->cloud, *transformed, keyframe.second->node->estimate().cast<float>());
 
@@ -133,6 +197,9 @@ bool InteractiveGraph::save_pointcloud(const std::string& filename) {
   accumulated->is_dense = false;
   accumulated->width = accumulated->size();
   accumulated->height = 1;
+
+  progress.set_text("saving pcd");
+  progress.increment();
 
   return pcl::io::savePCDFileBinary(filename, *accumulated);
 }

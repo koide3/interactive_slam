@@ -16,7 +16,7 @@ class ManualLoopCloseModal {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  ManualLoopCloseModal(InteractiveGraphView& graph, const std::string& data_directory);
+  ManualLoopCloseModal(std::shared_ptr<InteractiveGraphView>& graph, const std::string& data_directory);
   ~ManualLoopCloseModal();
 
   bool set_begin_keyframe(int keyframe_id);
@@ -39,7 +39,7 @@ private:
   void scan_matching();
 
 private:
-  InteractiveGraphView& graph;
+  std::shared_ptr<InteractiveGraphView>& graph;
 
   double fitness_score;
   KeyFrameView::Ptr begin_keyframe;

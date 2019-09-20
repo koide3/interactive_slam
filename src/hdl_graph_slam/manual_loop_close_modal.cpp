@@ -14,7 +14,7 @@
 
 namespace hdl_graph_slam {
 
-ManualLoopCloseModal::ManualLoopCloseModal(InteractiveGraphView& graph, const std::string& data_directory)
+ManualLoopCloseModal::ManualLoopCloseModal(std::shared_ptr<InteractiveGraphView>& graph, const std::string& data_directory)
     : graph(graph),
       fitness_score(0),
       registration_method(0),
@@ -34,25 +34,25 @@ ManualLoopCloseModal::ManualLoopCloseModal(InteractiveGraphView& graph, const st
 ManualLoopCloseModal::~ManualLoopCloseModal() {}
 
 bool ManualLoopCloseModal::set_begin_keyframe(int keyframe_id) {
-  auto found = graph.keyframes.find(keyframe_id);
-  if (found == graph.keyframes.end()) {
+  auto found = graph->keyframes.find(keyframe_id);
+  if (found == graph->keyframes.end()) {
     return false;
   }
 
   begin_keyframe_pose = found->second->estimate();
-  begin_keyframe = graph.keyframes_view_map[found->second];
+  begin_keyframe = graph->keyframes_view_map[found->second];
   return true;
 }
 
 bool ManualLoopCloseModal::set_end_keyframe(int keyframe_id) {
-  auto found = graph.keyframes.find(keyframe_id);
-  if (found == graph.keyframes.end()) {
+  auto found = graph->keyframes.find(keyframe_id);
+  if (found == graph->keyframes.end()) {
     return false;
   }
 
   end_keyframe_pose = found->second->estimate();
   end_keyframe_pose_init = end_keyframe_pose;
-  end_keyframe = graph.keyframes_view_map[found->second];
+  end_keyframe = graph->keyframes_view_map[found->second];
   update_fitness_score();
   return true;
 }
@@ -153,8 +153,8 @@ bool ManualLoopCloseModal::run() {
 
       if (ImGui::Button("Add edge")) {
         Eigen::Isometry3d relative = begin_keyframe_pose.inverse() * end_keyframe_pose;
-        graph.add_edge(begin_keyframe->lock(), end_keyframe->lock(), relative);
-        graph.optimize();
+        graph->add_edge(begin_keyframe->lock(), end_keyframe->lock(), relative);
+        graph->optimize();
 
         ImGui::CloseCurrentPopup();
         begin_keyframe = nullptr;
