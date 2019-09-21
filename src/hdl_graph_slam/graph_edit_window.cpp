@@ -30,7 +30,7 @@ void GraphEditWindow::draw_ui() {
         std::stringstream sst;
         sst << "Vertex " << v->id();
 
-        if(ImGui::Button("Unfix")) {
+        if(ImGui::Button(("Unfix##" + std::to_string(v->id())).c_str())) {
           v->setFixed(false);
         }
         ImGui::SameLine();
