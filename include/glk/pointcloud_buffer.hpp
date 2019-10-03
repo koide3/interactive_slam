@@ -19,10 +19,6 @@ public:
     PointCloudBuffer(const pcl::PointCloud<pcl::PointXYZI>::ConstPtr& cloud);
     ~PointCloudBuffer();
 
-    void set_model_matrix(const Eigen::Matrix4f& matrix) {
-      model_matrix = matrix;
-    }
-
     void draw(glk::GLSLShader& shader);
 
 private:
@@ -30,7 +26,6 @@ private:
     GLuint vbo;
     int stride;
     int num_points;
-    Eigen::Matrix4f model_matrix;
 };
 
 }

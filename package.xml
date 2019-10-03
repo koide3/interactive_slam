@@ -1,15 +1,14 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>interactive_map_correction</name>
+  <name>interactive_slam</name>
   <version>0.0.0</version>
-  <description>The interactive_map_correction package</description>
+  <description>The interactive_slam package</description>
 
   <maintainer email="k.koide@aist.go.jp">koide</maintainer>
 
-  <license>BSD</license>
+  <license>TBD</license>
 
-
-  <url type="website">https://github.com/koide3/interactive_map_correction</url>
+  <url type="website">https://github.com/koide3/interactive_slam</url>
 
   <build_depend>roscpp</build_depend>
   <build_depend>ndt_omp</build_depend>

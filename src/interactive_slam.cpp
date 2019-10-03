@@ -21,10 +21,10 @@
 
 namespace hdl_graph_slam {
 
-class InteractiveMapCorrectionApplication : public guik::Application {
+class InteractiveSLAMApplication : public guik::Application {
 public:
-  InteractiveMapCorrectionApplication() : Application() {}
-  ~InteractiveMapCorrectionApplication() {}
+  InteractiveSLAMApplication() : Application() {}
+  ~InteractiveSLAMApplication() {}
 
   bool init(const Eigen::Vector2i& size, const char* glsl_version = "#version 330") override {
     if(!Application::init(size, glsl_version)) {
@@ -38,7 +38,7 @@ public:
     right_clicked_pos.setZero();
     progress.reset(new guik::ProgressModal("progress modal"));
 
-    std::string package_path = ros::package::getPath("interactive_map_correction");
+    std::string package_path = ros::package::getPath("interactive_slam");
     std::string data_directory = package_path + "/data";
 
     main_canvas.reset(new guik::GLCanvas(data_directory, size));
@@ -59,6 +59,10 @@ public:
     return true;
   }
 
+  /**
+   * @brief draw ImGui-based UI
+   *
+   */
   virtual void draw_ui() override {
     main_menu();
 
@@ -93,6 +97,10 @@ public:
     mouse_control();
   }
 
+  /**
+   * @brief draw OpenGL related things
+   *
+   */
   virtual void draw_gl() override {
     glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
@@ -126,12 +134,21 @@ public:
     glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
   }
 
+  /**
+   * @brief frame buffer size change callback
+   *
+   * @param size
+   */
   virtual void framebuffer_size_callback(const Eigen::Vector2i& size) override {
     main_canvas->set_size(size);
     framebuffer_size = size;
   }
 
 private:
+  /**
+   * @brief show draw config settings
+   *
+   */
   void draw_flags_config() {
     if(!show_draw_config_window) {
       return;
@@ -161,6 +178,10 @@ private:
     ImGui::End();
   }
 
+  /**
+   * @brief draw main menu
+   *
+   */
   void main_menu() {
     ImGui::BeginMainMenuBar();
 
@@ -222,7 +243,7 @@ private:
     }
 
     if(ImGui::BeginMenu("Graph")) {
-      if(ImGui::MenuItem("Edit graph")) {
+      if(ImGui::MenuItem("Graph editor")) {
         graph_edit_window->show();
       }
 
@@ -267,6 +288,10 @@ private:
     plane_alignment_modal->close();
   }
 
+  /**
+   * @brief open map data
+   * @param open_dialog
+   */
   void open_map_data(bool open_dialog) {
     if(progress->run("graph load")) {
       auto result = progress->result<std::shared_ptr<InteractiveGraphView>>();
@@ -319,6 +344,10 @@ private:
     });
   }
 
+  /**
+   * @brief merge map data
+   * @param open_dialog
+   */
   void merge_map_data(bool open_dialog) {
     if(progress->run("graph merge")) {
       auto result = progress->result<InteractiveGraph*>();
@@ -369,6 +398,10 @@ private:
     });
   }
 
+  /**
+   * @brief save map data
+   * @param save_map_dialog
+   */
   void save_map_data(bool save_map_dialog) {
     if(progress->run("graph save")) {
       bool result = progress->result<bool>();
@@ -406,6 +439,10 @@ private:
     });
   }
 
+  /**
+   * @brief export point cloud
+   * @param export_map_dialog
+   */
   void export_pointcloud(bool export_map_dialog) {
     if(progress->run("graph export")) {
       int result = progress->result<int>();
@@ -437,6 +474,9 @@ private:
     progress->open<int>("graph export", [=](guik::ProgressInterface& p) { return graph->save_pointcloud(result, p); });
   }
 
+  /**
+   * @brief close map data
+   */
   void close_map_data() {
     std::unique_ptr<pfd::message> dialog(new pfd::message("confirm", "Do you want to close the map file?"));
     while(!dialog->ready()) {
@@ -452,6 +492,9 @@ private:
     graph->init_gl();
   }
 
+  /**
+   * @brief mouse input handler
+   */
   void mouse_control() {
     ImGuiIO& io = ImGui::GetIO();
     if(!io.WantCaptureMouse) {
@@ -464,6 +507,9 @@ private:
     }
   }
 
+  /**
+   * @brief context menu
+   */
   void context_menu() {
     if(ImGui::BeginPopupContextVoid("context menu")) {
       auto mouse_pos = ImGui::GetMousePos();
@@ -521,7 +567,7 @@ private:
       }
 
       if(picked_type & DrawableObject::PLANE) {
-        ImGui::Text("\nPlane");
+        ImGui::Text("\nPlane correction");
         if(ImGui::Button("Loop begin")) {
           clear_selections();
           plane_alignment_modal->set_begin_plane(picked_id);
@@ -530,6 +576,23 @@ private:
         if(ImGui::Button("Loop end")) {
           plane_alignment_modal->set_end_plane(picked_id);
           ImGui::OpenPopup("plane alignment");
+        }
+
+        if(ImGui::BeginMenu("Prior")) {
+          if(ImGui::MenuItem("UnitX")) {
+            graph->add_edge_prior_normal(picked_id, Eigen::Vector3d::UnitX(), 1000.0);
+            graph->optimize();
+          }
+          if(ImGui::MenuItem("UnitY")) {
+            graph->add_edge_prior_normal(picked_id, Eigen::Vector3d::UnitY(), 1000.0);
+            graph->optimize();
+          }
+          if(ImGui::MenuItem("UnitZ")) {
+            graph->add_edge_prior_normal(picked_id, Eigen::Vector3d::UnitZ(), 1000.0);
+            graph->optimize();
+          }
+
+          ImGui::EndMenu();
         }
       }
 
@@ -564,7 +627,7 @@ private:
 }  // namespace hdl_graph_slam
 
 int main(int argc, char** argv) {
-  std::unique_ptr<guik::Application> app(new hdl_graph_slam::InteractiveMapCorrectionApplication());
+  std::unique_ptr<guik::Application> app(new hdl_graph_slam::InteractiveSLAMApplication());
 
   if(!app->init(Eigen::Vector2i(1920, 1080))) {
     return 1;

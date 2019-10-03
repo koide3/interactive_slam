@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(interactive_map_correction)
+project(interactive_slam)
 
 # add_compile_options(-std=c++11)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
@@ -83,9 +83,22 @@ add_library(guik STATIC
   src/guik/imgui_application.cpp
 )
 
+add_executable(odometry2graph
+  src/odometry2graph.cpp
+  src/hdl_graph_slam/version_modal.cpp
+)
+target_link_libraries(odometry2graph
+  ${PCL_LIBRARIES}
+  ${OPENGL_LIBRARIES}
+  ${GLEW_LIBRARIES}
+  ${catkin_LIBRARIES}
+  glfw
+  guik
+  imgui
+)
 
-add_executable(interactive_map_correction
-  src/interactive_map_correction.cpp
+add_executable(interactive_slam
+  src/interactive_slam.cpp
   src/hdl_graph_slam/interactive_graph.cpp
   src/hdl_graph_slam/interactive_keyframe.cpp
   src/hdl_graph_slam/version_modal.cpp
@@ -97,7 +110,7 @@ add_executable(interactive_map_correction
   src/hdl_graph_slam/view/edge_view.cpp
   src/hdl_graph_slam/view/vertex_view.cpp
 )
-target_link_libraries(interactive_map_correction
+target_link_libraries(interactive_slam
   ${PCL_LIBRARIES}
   ${G2O_TYPES_DATA}
   ${G2O_CORE_LIBRARY}

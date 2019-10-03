@@ -34,7 +34,6 @@ public:
   void draw_ui();
   void show_projection_setting();
 
-
 public:
   Eigen::Vector2i size;
   std::unique_ptr<glk::GLSLShader> shader;
@@ -47,6 +46,7 @@ public:
 private:
   float min_z;
   float max_z;
+  bool z_clipping;
 };
 
 }  // namespace guik

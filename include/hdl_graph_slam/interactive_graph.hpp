@@ -36,6 +36,7 @@ public:
 
   void add_edge_parallel(g2o::VertexPlane* v1, g2o::VertexPlane* v2, double information_scale);
   void add_edge_perpendicular(g2o::VertexPlane* v1, g2o::VertexPlane* v2, double information_scale);
+  bool add_edge_prior_normal(long plane_vertex_id, const Eigen::Vector3d& normal, double information_scale);
 
   void optimize();
 

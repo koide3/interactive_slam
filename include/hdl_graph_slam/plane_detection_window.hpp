@@ -60,6 +60,7 @@ private:
   Eigen::Vector3f center_point;
 
   float initial_neighbor_search_radius;
+  float normal_estimation_radius;
   int min_cluster_size;
   int max_cluster_size;
   int num_neighbors;

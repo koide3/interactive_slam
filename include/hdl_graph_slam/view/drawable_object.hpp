@@ -19,6 +19,8 @@ public:
     draw_se3_plane_edges = true;
     draw_floor_edges = false;
     draw_plane_edges = true;
+
+    z_clipping = true;
   }
 
   bool draw_verticies;
@@ -31,6 +33,8 @@ public:
   bool draw_se3_plane_edges;
   bool draw_floor_edges;
   bool draw_plane_edges;
+
+  bool z_clipping;
 };
 
 class DrawableObject {

@@ -149,6 +149,23 @@ void InteractiveGraph::add_edge_perpendicular(g2o::VertexPlane* v1, g2o::VertexP
   edge->setId(edge_id_gen++);
 }
 
+bool InteractiveGraph::add_edge_prior_normal(long plane_vertex_id, const Eigen::Vector3d& normal, double information_scale) {
+  auto vertex = graph->vertex(plane_vertex_id);
+  if(vertex == nullptr) {
+    return false;
+  }
+
+  g2o::VertexPlane* vertex_plane = dynamic_cast<g2o::VertexPlane*>(vertex);
+  if(vertex_plane == nullptr) {
+    return false;
+  }
+
+  Eigen::Matrix3d inf = Eigen::Matrix3d::Identity() * information_scale;
+  this->add_plane_normal_prior_edge(vertex_plane, normal, inf);
+
+  return true;
+}
+
 void InteractiveGraph::optimize() {
   g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
   auto t1 = std::chrono::high_resolution_clock::now();

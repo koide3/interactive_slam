@@ -25,7 +25,7 @@ namespace guik {
  * @param data_directory
  * @param size
  */
-GLCanvas::GLCanvas(const std::string& data_directory, const Eigen::Vector2i& size) : size(size), min_z(-1.5f), max_z(5.0f) {
+GLCanvas::GLCanvas(const std::string& data_directory, const Eigen::Vector2i& size) : size(size), min_z(-1.5f), max_z(5.0f), z_clipping(true) {
   frame_buffer.reset(new glk::FrameBuffer(size));
   frame_buffer->add_color_buffer(GL_RGBA32I, GL_RGBA_INTEGER, GL_INT);
 
@@ -90,6 +90,7 @@ void GLCanvas::bind() {
 
   shader->set_uniform("view_matrix", view_matrix);
   shader->set_uniform("projection_matrix", projection_matrix);
+  shader->set_uniform("z_clipping", z_clipping ? 1 : 0);
   shader->set_uniform("z_range", Eigen::Vector2f(min_z, max_z));
 
   shader->set_uniform("color_mode", 0);
@@ -237,6 +238,7 @@ void GLCanvas::draw_ui() {
   ImGui::Begin("shader setting", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
   ImGui::DragFloat("min_z", &min_z, 0.1f);
   ImGui::DragFloat("max_z", &max_z, 0.1f);
+  ImGui::Checkbox("z_clipping", &z_clipping);
   ImGui::End();
 
   projection_control->draw_ui();

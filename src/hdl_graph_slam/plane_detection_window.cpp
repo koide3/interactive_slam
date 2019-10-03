@@ -24,6 +24,7 @@ PlaneDetectionWindow::PlaneDetectionWindow(std::shared_ptr<InteractiveGraphView>
       graph(graph),
       center_point(0.0f, 0.0f, 0.0f),
       initial_neighbor_search_radius(1.0f),
+      normal_estimation_radius(1.0f),
       min_cluster_size(50),
       max_cluster_size(10000),
       num_neighbors(10),
@@ -92,7 +93,7 @@ RegionGrowingResult::Ptr PlaneDetectionWindow::region_growing(guik::ProgressInte
   pcl::search::KdTree<pcl::PointXYZI>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZI>());
   ne.setInputCloud(accumulated_points);
   ne.setSearchMethod(tree);
-  ne.setRadiusSearch(0.25f);
+  ne.setRadiusSearch(normal_estimation_radius);
 
   ne.compute(*accumulated_normals);
 
@@ -223,6 +224,7 @@ void PlaneDetectionWindow::draw_ui() {
 
   ImGui::Text("Region growing");
   ImGui::DragFloat("Initial neighbor radius", &initial_neighbor_search_radius, 0.1f, 0.1f, 30.0f);
+  ImGui::DragFloat("Normal estimation radius", &normal_estimation_radius, 0.1f, 0.1f, 5.0f);
   ImGui::DragInt("Min cluster size", &min_cluster_size, 1, 10, 10000);
   ImGui::DragInt("Max cluster size", &max_cluster_size, 100, 100, 1000000);
   ImGui::DragInt("Num neighbors", &num_neighbors, 1, 1, 1000);
@@ -236,7 +238,9 @@ void PlaneDetectionWindow::draw_ui() {
   }
   if (region_growing_progress_modal.run("region growing")) {
     region_growing_result = region_growing_progress_modal.result<RegionGrowingResult::Ptr>();
-    region_growing_result->cloud_buffer = std::make_shared<glk::PointCloudBuffer>(region_growing_result->cloud);
+    if(region_growing_result) {
+      region_growing_result->cloud_buffer = std::make_shared<glk::PointCloudBuffer>(region_growing_result->cloud);
+    }
   }
 
   if (region_growing_result) {
