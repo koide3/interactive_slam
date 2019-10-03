@@ -10,7 +10,7 @@
 
 namespace hdl_graph_slam {
 
-AutomaticLoopCloseWindow::AutomaticLoopCloseWindow(std::shared_ptr<InteractiveGraphView>& graph, const std::string& data_directory)
+AutomaticLoopCloseWindow::AutomaticLoopCloseWindow(std::shared_ptr<InteractiveGraphView>& graph)
     : show_window(false),
       graph(graph),
       running(false),
@@ -101,9 +101,9 @@ void AutomaticLoopCloseWindow::loop_detection() {
     }
 
     bool edge_inserted = false;
-    ndt->setInputTarget(source->lock()->cloud);
+    registration->setInputTarget(source->lock()->cloud);
     for (int i = 0; i < candidates.size(); i++) {
-      ndt->setInputSource(candidates[i]->lock()->cloud);
+      registration->setInputSource(candidates[i]->lock()->cloud);
 
       pcl::PointCloud<pcl::PointXYZI>::Ptr aligned(new pcl::PointCloud<pcl::PointXYZI>());
       Eigen::Isometry3d relative = source_pose.inverse() * candidates[i]->lock()->node->estimate();

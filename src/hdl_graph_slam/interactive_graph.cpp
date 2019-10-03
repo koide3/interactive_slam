@@ -32,18 +32,18 @@ InteractiveGraph::~InteractiveGraph() {}
 bool InteractiveGraph::load_map_data(const std::string& directory, guik::ProgressInterface& progress) {
   progress.set_title("Opening " + directory);
   progress.set_text("loading graph");
-  if (!load(directory + "/graph.g2o")) {
+  if(!load(directory + "/graph.g2o")) {
     return false;
   }
 
   edge_id_gen = 0;
-  for (auto& edge : graph->edges()) {
+  for(auto& edge : graph->edges()) {
     edge->setId(edge_id_gen++);
   }
 
   progress.increment();
   progress.set_text("loading keyframes");
-  if (!load_keyframes(directory, progress)) {
+  if(!load_keyframes(directory, progress)) {
     return false;
   }
 
@@ -54,10 +54,10 @@ bool InteractiveGraph::merge_map_data(InteractiveGraph& graph_, const Interactiv
   long max_vertex_id = 0;
   long max_edge_id = 0;
 
-  for(const auto& vertex: graph->vertices()) {
+  for(const auto& vertex : graph->vertices()) {
     max_vertex_id = std::max<long>(max_vertex_id, vertex.first);
   }
-  for(const auto& edge: graph->edges()) {
+  for(const auto& edge : graph->edges()) {
     max_edge_id = std::max<long>(max_edge_id, edge->id());
   }
 
@@ -70,7 +70,7 @@ bool InteractiveGraph::merge_map_data(InteractiveGraph& graph_, const Interactiv
     auto v = dynamic_cast<g2o::OptimizableGraph::Vertex*>(vertex.second);
 
     std::stringstream sst;
-    if (!v->write(sst)) {
+    if(!v->write(sst)) {
       std::cerr << "error: failed to write vertex data" << std::endl;
       return false;
     }
@@ -104,7 +104,7 @@ bool InteractiveGraph::merge_map_data(InteractiveGraph& graph_, const Interactiv
       return false;
     }
     new_e->setId(new_edge_id);
-    for(int i=0; i<new_e->vertices().size(); i++) {
+    for(int i = 0; i < new_e->vertices().size(); i++) {
       new_e->vertices()[i] = new_vertices_map[e->vertices()[i]->id()];
     }
 
@@ -140,14 +140,14 @@ bool InteractiveGraph::merge_map_data(InteractiveGraph& graph_, const Interactiv
 
 bool InteractiveGraph::load_keyframes(const std::string& directory, guik::ProgressInterface& progress) {
   progress.set_maximum(graph->vertices().size());
-  for (int i = 0;; i++) {
+  for(int i = 0;; i++) {
     std::string keyframe_dir = (boost::format("%s/%06d") % directory % i).str();
-    if (!boost::filesystem::is_directory(keyframe_dir)) {
+    if(!boost::filesystem::is_directory(keyframe_dir)) {
       break;
     }
 
     InteractiveKeyFrame::Ptr keyframe = std::make_shared<InteractiveKeyFrame>(keyframe_dir, graph.get());
-    if (!keyframe->node) {
+    if(!keyframe->node) {
       std::cerr << "error : failed to load keyframe!!" << std::endl;
       std::cerr << "      : " << keyframe_dir << std::endl;
       return false;
@@ -165,23 +165,29 @@ g2o::EdgeSE3* InteractiveGraph::add_edge(const KeyFrame::Ptr& key1, const KeyFra
   g2o::EdgeSE3* edge = add_se3_edge(key1->node, key2->node, relative_pose, inf);
   edge->setId(edge_id_gen++);
 
-  if (robust_kernel != "NONE") {
+  if(robust_kernel != "NONE") {
     add_robust_kernel(edge, robust_kernel, robust_kernel_delta);
   }
 
   return edge;
 }
 
-g2o::VertexPlane* InteractiveGraph::add_plane(const Eigen::Vector4d& coeffs) { return add_plane_node(coeffs); }
+g2o::VertexPlane* InteractiveGraph::add_plane(const Eigen::Vector4d& coeffs) {
+  return add_plane_node(coeffs);
+}
 g2o::EdgeSE3Plane* InteractiveGraph::add_edge(const KeyFrame::Ptr& v_se3, g2o::VertexPlane* v_plane, const Eigen::Vector4d& coeffs, const Eigen::MatrixXd& information, const std::string& robust_kernel, double robust_kernel_delta) {
   g2o::EdgeSE3Plane* edge = add_se3_plane_edge(v_se3->node, v_plane, coeffs, information);
   edge->setId(edge_id_gen++);
 
-  if (robust_kernel != "NONE") {
+  if(robust_kernel != "NONE") {
     add_robust_kernel(edge, robust_kernel, robust_kernel_delta);
   }
 
   return edge;
+}
+
+void InteractiveGraph::apply_robust_kernel(g2o::HyperGraph::Edge* edge, const std::string& robust_kernel, double robust_kernel_delta) {
+  add_robust_kernel(edge, robust_kernel, robust_kernel_delta);
 }
 
 void InteractiveGraph::add_edge_parallel(g2o::VertexPlane* v1, g2o::VertexPlane* v2, double information_scale) {
@@ -233,7 +239,7 @@ void InteractiveGraph::dump(const std::string& directory, guik::ProgressInterfac
   progress.set_text("saving keyframes");
 
   int keyframe_id = 0;
-  for (const auto& keyframe : keyframes) {
+  for(const auto& keyframe : keyframes) {
     progress.increment();
 
     std::stringstream sst;
@@ -247,7 +253,7 @@ bool InteractiveGraph::save_pointcloud(const std::string& filename, guik::Progre
   progress.set_text("accumulate points");
 
   pcl::PointCloud<pcl::PointXYZI>::Ptr accumulated(new pcl::PointCloud<pcl::PointXYZI>());
-  for (const auto& keyframe : keyframes) {
+  for(const auto& keyframe : keyframes) {
     progress.increment();
 
     pcl::PointCloud<pcl::PointXYZI>::Ptr transformed(new pcl::PointCloud<pcl::PointXYZI>());

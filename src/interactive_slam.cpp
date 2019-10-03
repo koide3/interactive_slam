@@ -14,6 +14,7 @@
 #include <hdl_graph_slam/plane_detection_window.hpp>
 #include <hdl_graph_slam/plane_alignment_modal.hpp>
 #include <hdl_graph_slam/manual_loop_close_model.hpp>
+#include <hdl_graph_slam/edge_refinement_window.hpp>
 #include <hdl_graph_slam/automatic_loop_close_window.hpp>
 #include <hdl_graph_slam/view/interactive_graph_view.hpp>
 
@@ -54,7 +55,8 @@ public:
     plane_detection_window.reset(new PlaneDetectionWindow(graph));
     plane_alignment_modal.reset(new PlaneAlignmentModal(graph));
     manual_loop_close_modal.reset(new ManualLoopCloseModal(graph, data_directory));
-    automatic_loop_close_window.reset(new AutomaticLoopCloseWindow(graph, data_directory));
+    automatic_loop_close_window.reset(new AutomaticLoopCloseWindow(graph));
+    edge_refinement_window.reset(new EdgeRefinementWindow(graph));
 
     return true;
   }
@@ -91,6 +93,7 @@ public:
     graph_edit_window->draw_ui();
     plane_detection_window->draw_ui();
     automatic_loop_close_window->draw_ui();
+    edge_refinement_window->draw_ui();
 
     draw_flags_config();
     context_menu();
@@ -127,6 +130,7 @@ public:
     plane_alignment_modal->draw_gl(*main_canvas->shader);
     manual_loop_close_modal->draw_gl(*main_canvas->shader);
     automatic_loop_close_window->draw_gl(*main_canvas->shader);
+    edge_refinement_window->draw_gl(*main_canvas->shader);
 
     main_canvas->unbind();
     main_canvas->render_to_screen();
@@ -252,6 +256,11 @@ private:
         automatic_loop_close_window->show();
       }
 
+      if(ImGui::MenuItem("Edge refinement")) {
+        clear_selections();
+        edge_refinement_window->show();
+      }
+
       if(ImGui::MenuItem("Optimize")) {
         graph->optimize();
       }
@@ -284,6 +293,7 @@ private:
   void clear_selections() {
     manual_loop_close_modal->close();
     automatic_loop_close_window->close();
+    edge_refinement_window->close();
     plane_detection_window->close();
     plane_alignment_modal->close();
   }
@@ -622,6 +632,7 @@ private:
   std::unique_ptr<PlaneAlignmentModal> plane_alignment_modal;
   std::unique_ptr<ManualLoopCloseModal> manual_loop_close_modal;
   std::unique_ptr<AutomaticLoopCloseWindow> automatic_loop_close_window;
+  std::unique_ptr<EdgeRefinementWindow> edge_refinement_window;
 };
 
 }  // namespace hdl_graph_slam

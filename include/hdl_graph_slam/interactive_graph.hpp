@@ -34,6 +34,8 @@ public:
   g2o::VertexPlane* add_plane(const Eigen::Vector4d& coeffs);
   g2o::EdgeSE3Plane* add_edge(const KeyFrame::Ptr& v_se3, g2o::VertexPlane* v_plane, const Eigen::Vector4d& coeffs, const Eigen::MatrixXd& information, const std::string& robust_kernel = "NONE", double robust_kernel_delta = 0.1);
 
+  void apply_robust_kernel(g2o::HyperGraph::Edge* edge, const std::string& robust_kernel, double robust_kernel_delta);
+
   void add_edge_parallel(g2o::VertexPlane* v1, g2o::VertexPlane* v2, double information_scale);
   void add_edge_perpendicular(g2o::VertexPlane* v1, g2o::VertexPlane* v2, double information_scale);
   bool add_edge_prior_normal(long plane_vertex_id, const Eigen::Vector3d& normal, double information_scale);
