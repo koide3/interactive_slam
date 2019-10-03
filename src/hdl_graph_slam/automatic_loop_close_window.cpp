@@ -189,14 +189,17 @@ std::vector<KeyFrameView::Ptr> AutomaticLoopCloseWindow::find_loop_candidates(co
       continue;
     }
 
+    double dist = (candidate->lock()->node->estimate().translation() - keyframe_pos).norm();
+
     auto found = accum_distances.find(candidate->lock()->id());
     if (found == accum_distances.end()) {
+      if(dist < distance_thresh) {
+        loop_candidates.push_back(candidate);
+      }
       continue;
     }
 
     double accum_dist = found->second;
-    double dist = (candidate->lock()->node->estimate().translation() - keyframe_pos).norm();
-
     if (accum_dist > accum_distance_thresh && dist < distance_thresh) {
       loop_candidates.push_back(candidate);
     }

@@ -41,6 +41,13 @@ void EdgeView::context_menu() {
 
   ImGui::Text("Type:%s", factory->tag(e).c_str());
 
+  std::stringstream sst;
+  sst << "Vertices:";
+  for(int i=0; i<e->vertices().size(); i++) {
+    sst << e->vertices()[i]->id() << " ";
+  }
+  ImGui::Text(sst.str().c_str());
+
   g2o::RobustKernel* robust_kernel = e->robustKernel();
   if(robust_kernel == nullptr) {
     ImGui::Text("Robust kernel:NONE");

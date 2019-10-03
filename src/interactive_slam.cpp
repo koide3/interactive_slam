@@ -191,10 +191,10 @@ private:
     bool export_map_dialog = false;
     if(ImGui::BeginMenu("File")) {
       if(ImGui::BeginMenu("Open")) {
-        if(ImGui::MenuItem("New map data")) {
+        if(ImGui::MenuItem("New map")) {
           open_map_dialog = true;
         }
-        if(ImGui::MenuItem("Merge another map")) {
+        if(ImGui::MenuItem("Merge map")) {
           merge_map_dialog = true;
         }
         ImGui::EndMenu();

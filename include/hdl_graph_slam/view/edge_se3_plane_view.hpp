@@ -26,8 +26,11 @@ public:
       return;
     }
 
-    if (!flags.draw_floor_edges && v_plane->id() < 5) {
-      return;
+    if (!flags.draw_floor_edges) {
+      Eigen::Vector4d coeffs = v_plane->estimate().coeffs();
+      if((coeffs - Eigen::Vector4d::UnitZ()).norm() < 1e-6) {
+        return;
+      }
     }
 
     VertexPlaneCache* cache = dynamic_cast<VertexPlaneCache*>(v_plane->userData());

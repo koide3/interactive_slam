@@ -3,6 +3,8 @@
 #include <chrono>
 #include <boost/filesystem.hpp>
 
+#include <g2o/core/factory.h>
+#include <g2o/core/robust_kernel_impl.h>
 #include <g2o/core/sparse_optimizer.h>
 #include <g2o/types/slam3d/edge_se3.h>
 #include <g2o/types/slam3d_addons/vertex_plane.h>
@@ -59,36 +61,79 @@ bool InteractiveGraph::merge_map_data(InteractiveGraph& graph_, const Interactiv
     max_edge_id = std::max<long>(max_edge_id, edge->id());
   }
 
+  g2o::Factory* factory = g2o::Factory::instance();
   std::unordered_map<long, g2o::HyperGraph::Vertex*> new_vertices_map;
 
-  int n = 0;
+  // clone vertices
   for(const auto& vertex : graph_.graph->vertices()) {
     long new_vertex_id = ++max_vertex_id;
+    auto v = dynamic_cast<g2o::OptimizableGraph::Vertex*>(vertex.second);
 
-    auto ele = vertex.second->clone();
-    std::cout << int(ele != nullptr) << std::endl;
-    // auto cloned = dynamic_cast<g2o::HyperGraph::Vertex*>(ele);
-    auto cloned = vertex.second;
-    new_vertices_map[vertex.first] = cloned;
-    cloned->setId(new_vertex_id);
-    graph->addVertex(cloned);
+    std::stringstream sst;
+    if (!v->write(sst)) {
+      std::cerr << "error: failed to write vertex data" << std::endl;
+      return false;
+    }
+
+    auto new_v = dynamic_cast<g2o::OptimizableGraph::Vertex*>(factory->construct(factory->tag(v)));
+    if(!new_v->read(sst)) {
+      std::cerr << "error: failed to read vertex data" << std::endl;
+      return false;
+    }
+    new_v->setFixed(v->fixed());
+    new_v->setId(new_vertex_id);
+    graph->addVertex(new_v);
+
+    new_vertices_map[v->id()] = new_v;
   }
 
+  // clone edges
   for(const auto& edge : graph_.graph->edges()) {
     long new_edge_id = ++max_edge_id;
-    // g2o::HyperGraph::Edge* cloned = dynamic_cast<g2o::HyperGraph::Edge*>(edge->clone());
+    auto e = dynamic_cast<g2o::OptimizableGraph::Edge*>(edge);
+
+    std::stringstream sst;
+    if(!e->write(sst)) {
+      std::cerr << "error: failed to write edge data" << std::endl;
+      return false;
+    }
+
+    auto new_e = dynamic_cast<g2o::OptimizableGraph::Edge*>(factory->construct(factory->tag(e)));
+    if(!new_e->read(sst)) {
+      std::cerr << "error: failed to read edge data" << std::endl;
+      return false;
+    }
+    new_e->setId(new_edge_id);
+    for(int i=0; i<new_e->vertices().size(); i++) {
+      new_e->vertices()[i] = new_vertices_map[e->vertices()[i]->id()];
+    }
+
+    if(e->robustKernel()) {
+      g2o::RobustKernel* kernel = nullptr;
+
+      if(dynamic_cast<g2o::RobustKernelHuber*>(e->robustKernel())) {
+        kernel = new g2o::RobustKernelHuber();
+      }
+
+      if(kernel == nullptr) {
+        std::cerr << "warning: unknown kernel type!!" << std::endl;
+      } else {
+        kernel->setDelta(e->robustKernel()->delta());
+        new_e->setRobustKernel(kernel);
+      }
+    }
+
     edge->setId(new_edge_id);
-    graph->addEdge(edge);
+    graph->addEdge(new_e);
   }
 
+  // copy keyframes
   for(const auto& keyframe : graph_.keyframes) {
     keyframe.second->node = dynamic_cast<g2o::VertexSE3*>(new_vertices_map[keyframe.second->id()]);
+    std::cout << "keyframe_id:" << keyframe.second->node->id() << std::endl;
     assert(keyframe.second->node);
     keyframes[keyframe.second->id()] = keyframe.second;
   }
-
-  std::cout << "edge between " << key1->id() << " and " << key2->id() << std::endl;
-  add_se3_edge(key1->node, key2->node, relative_pose, Eigen::MatrixXd::Identity(6, 6));
 
   return true;
 }
