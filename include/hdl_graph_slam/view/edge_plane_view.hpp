@@ -22,6 +22,20 @@ public:
 
   virtual bool available() const override { return true; }
 
+  virtual Eigen::Vector3f representative_point() const override {
+    VertexPlaneCache* cache1 = dynamic_cast<VertexPlaneCache*>(v1->userData());
+    VertexPlaneCache* cache2 = dynamic_cast<VertexPlaneCache*>(v2->userData());
+    if(cache1 == nullptr || cache2 == nullptr) {
+      std::cerr << "warning: vertex plane cache has not been created!!" << std::endl;
+      return Eigen::Vector3f::Zero();
+    }
+
+    Eigen::Vector3f p1 = cache1->pose().translation().cast<float>();
+    Eigen::Vector3f p2 = cache2->pose().translation().cast<float>();
+
+    return (p1 + p2) * 0.5f;
+  }
+
   virtual void draw(const DrawFlags& flags, glk::GLSLShader& shader) override {
     if(!flags.draw_edges || !flags.draw_plane_edges) {
       return;

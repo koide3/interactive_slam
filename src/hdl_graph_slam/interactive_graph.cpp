@@ -9,6 +9,7 @@
 #include <g2o/types/slam3d/edge_se3.h>
 #include <g2o/types/slam3d_addons/vertex_plane.h>
 #include <g2o/edge_se3_plane.hpp>
+#include <g2o/edge_plane_prior.hpp>
 #include <g2o/edge_plane_parallel.hpp>
 
 #include <pcl/io/pcd_io.h>
@@ -21,7 +22,7 @@
 
 namespace hdl_graph_slam {
 
-InteractiveGraph::InteractiveGraph() : GraphSLAM("lm_var"), iterations(0), chi2_before(0.0), chi2_after(0.0), elapsed_time_msec(0.0) {
+InteractiveGraph::InteractiveGraph() : GraphSLAM("lm_var_cholmod"), iterations(0), chi2_before(0.0), chi2_after(0.0), elapsed_time_msec(0.0) {
   inf_calclator.reset(new InformationMatrixCalculator());
   inf_calclator->load(params);
   edge_id_gen = 0;
@@ -190,17 +191,23 @@ void InteractiveGraph::apply_robust_kernel(g2o::HyperGraph::Edge* edge, const st
   add_robust_kernel(edge, robust_kernel, robust_kernel_delta);
 }
 
-void InteractiveGraph::add_edge_parallel(g2o::VertexPlane* v1, g2o::VertexPlane* v2, double information_scale) {
+void InteractiveGraph::add_edge_parallel(g2o::VertexPlane* v1, g2o::VertexPlane* v2, double information_scale, const std::string& robust_kernel, double robust_kernel_delta) {
   auto edge = add_plane_parallel_edge(v1, v2, Eigen::Vector3d::Zero(), Eigen::Matrix3d::Identity() * information_scale);
+  if(robust_kernel != "NONE") {
+    add_robust_kernel(edge, robust_kernel, robust_kernel_delta);
+  }
   edge->setId(edge_id_gen++);
 }
 
-void InteractiveGraph::add_edge_perpendicular(g2o::VertexPlane* v1, g2o::VertexPlane* v2, double information_scale) {
-  auto edge = add_plane_perpendicular_edge(v1, v2, Eigen::Vector3d::Zero(), Eigen::Matrix3d::Identity() * information_scale);
+void InteractiveGraph::add_edge_perpendicular(g2o::VertexPlane* v1, g2o::VertexPlane* v2, double information_scale, const std::string& robust_kernel, double robust_kernel_delta) {
+  auto edge = add_plane_perpendicular_edge(v1, v2, Eigen::Vector3d::Zero(), Eigen::MatrixXd::Identity(1, 1) * information_scale);
+  if(robust_kernel != "NONE") {
+    add_robust_kernel(edge, robust_kernel, robust_kernel_delta);
+  }
   edge->setId(edge_id_gen++);
 }
 
-bool InteractiveGraph::add_edge_prior_normal(long plane_vertex_id, const Eigen::Vector3d& normal, double information_scale) {
+bool InteractiveGraph::add_edge_prior_normal(long plane_vertex_id, const Eigen::Vector3d& normal, double information_scale, const std::string& robust_kernel, double robust_kernel_delta) {
   auto vertex = graph->vertex(plane_vertex_id);
   if(vertex == nullptr) {
     return false;
@@ -212,21 +219,48 @@ bool InteractiveGraph::add_edge_prior_normal(long plane_vertex_id, const Eigen::
   }
 
   Eigen::Matrix3d inf = Eigen::Matrix3d::Identity() * information_scale;
-  this->add_plane_normal_prior_edge(vertex_plane, normal, inf);
+  auto edge = this->add_plane_normal_prior_edge(vertex_plane, normal, inf);
+  if(robust_kernel != "NONE") {
+    add_robust_kernel(edge, robust_kernel, robust_kernel_delta);
+  }
 
   return true;
 }
 
-void InteractiveGraph::optimize() {
+bool InteractiveGraph::add_edge_prior_distance(long plane_vertex_id, double distance, double information_scale, const std::string& robust_kernel, double robust_kernel_delta) {
+  auto vertex = graph->vertex(plane_vertex_id);
+  if(vertex == nullptr) {
+    return false;
+  }
+
+  g2o::VertexPlane* vertex_plane = dynamic_cast<g2o::VertexPlane*>(vertex);
+  if(vertex_plane == nullptr) {
+    return false;
+  }
+
+  Eigen::MatrixXd inf = Eigen::MatrixXd::Identity(1, 1) * information_scale;
+  auto edge = this->add_plane_distance_prior_edge(vertex_plane, distance, inf);
+  if(robust_kernel != "NONE") {
+    add_robust_kernel(edge, robust_kernel, robust_kernel_delta);
+  }
+
+  return true;
+}
+
+void InteractiveGraph::optimize(int num_iterations) {
   g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
   auto t1 = std::chrono::high_resolution_clock::now();
 
+  if(num_iterations < 0) {
+    num_iterations = params.param<int>("g2o_solver_num_iterations", 64);
+  }
+
   chi2_before = graph->chi2();
-  iterations = GraphSLAM::optimize(params.param<int>("g2o_solver_num_iterations", 64));
+  iterations = GraphSLAM::optimize(num_iterations);
   chi2_after = graph->chi2();
 
   auto t2 = std::chrono::high_resolution_clock::now();
-  elapsed_time_msec = std::chrono::duration_cast<std::chrono::seconds>(t2 - t1).count();
+  elapsed_time_msec = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count() / 1000000.0;
 }
 
 void InteractiveGraph::dump(const std::string& directory, guik::ProgressInterface& progress) {

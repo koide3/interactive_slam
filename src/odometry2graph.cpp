@@ -36,6 +36,16 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   using Ptr = std::shared_ptr<OdometryFrame>;
 
+public:
+  OdometryFrame(const std::string& raw_cloud_path, const Eigen::Isometry3d& pose, unsigned long stamp_sec, unsigned long stamp_usec) : raw_cloud_path(raw_cloud_path), cloud_(nullptr), pose(pose), stamp_sec(stamp_sec), stamp_usec(stamp_usec) {}
+
+  OdometryFrame(const std::string& raw_cloud_path, const Eigen::Isometry3d& pose) : raw_cloud_path(raw_cloud_path), cloud_(nullptr), pose(pose), downsample_resolution(0.2f) {
+    char underscore;
+    std::stringstream sst(boost::filesystem::path(raw_cloud_path).filename().string());
+    sst >> stamp_sec >> underscore >> stamp_usec;
+  }
+
+public:
   static OdometryFrame::Ptr load(const std::string& cloud_filename, const std::string& pose_filename) {
     std::ifstream ifs(pose_filename);
     if(!ifs) {
@@ -55,16 +65,8 @@ public:
     return std::make_shared<OdometryFrame>(cloud_filename, pose);
   }
 
-public:
-  OdometryFrame(const std::string& raw_cloud_path, const Eigen::Isometry3d& pose)
-  :  raw_cloud_path(raw_cloud_path),
-  cloud_(nullptr),
-  pose(pose),
-  downsample_resolution(0.2f)
-  {
-    char underscore;
-    std::stringstream sst(boost::filesystem::path(raw_cloud_path).filename().string());
-    sst >> stamp_sec >> underscore >> stamp_usec;
+  static OdometryFrame::Ptr load(const std::string& cloud_filename, const Eigen::Isometry3d& pose, unsigned long stamp_sec, unsigned long stamp_usec) {
+    return std::make_shared<OdometryFrame>(cloud_filename, pose, stamp_sec, stamp_usec);
   }
 
   const pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud() {
@@ -72,28 +74,24 @@ public:
   }
 
   const pcl::PointCloud<pcl::PointXYZI>::Ptr& cloud(float downsample_resolution) {
-      if(cloud_ == nullptr || std::abs(this->downsample_resolution - downsample_resolution) > 0.01f) {
-        pcl::PointCloud<pcl::PointXYZI>::Ptr raw_cloud(new pcl::PointCloud<pcl::PointXYZI>());
-        pcl::PointCloud<pcl::PointXYZI>::Ptr downsampled(new pcl::PointCloud<pcl::PointXYZI>());
-        if(pcl::io::loadPCDFile(raw_cloud_path, *raw_cloud)) {
-          std::cerr << "error : failed to load " << raw_cloud_path << std::endl;
-          abort();
-        }
+    if(cloud_ == nullptr || std::abs(this->downsample_resolution - downsample_resolution) > 0.01f) {
+      pcl::PointCloud<pcl::PointXYZI>::Ptr raw_cloud = load_cloud(raw_cloud_path);
+      pcl::PointCloud<pcl::PointXYZI>::Ptr downsampled(new pcl::PointCloud<pcl::PointXYZI>());
 
-        pcl::VoxelGrid<pcl::PointXYZI> voxel_grid;
-        voxel_grid.setLeafSize(downsample_resolution, downsample_resolution, downsample_resolution);
-        voxel_grid.setInputCloud(raw_cloud);
-        voxel_grid.filter(*downsampled);
+      pcl::VoxelGrid<pcl::PointXYZI> voxel_grid;
+      voxel_grid.setLeafSize(downsample_resolution, downsample_resolution, downsample_resolution);
+      voxel_grid.setInputCloud(raw_cloud);
+      voxel_grid.filter(*downsampled);
 
-        this->downsample_resolution = downsample_resolution;
-        cloud_ = downsampled;
-        cloud_buffer.reset(new glk::PointCloudBuffer(cloud_));
-      }
+      this->downsample_resolution = downsample_resolution;
+      cloud_ = downsampled;
+      cloud_buffer.reset(new glk::PointCloudBuffer(cloud_));
+    }
 
-      return cloud_;
+    return cloud_;
   }
 
-  void draw(glk::GLSLShader& shader, float downsample_resolution=0.1f) {
+  void draw(glk::GLSLShader& shader, float downsample_resolution = 0.1f) {
     cloud(downsample_resolution);
 
     shader.set_uniform("color_mode", 0);
@@ -105,7 +103,50 @@ public:
     auto& sphere = glk::Primitives::instance()->primitive(glk::Primitives::SPHERE);
     sphere.draw(shader);
   }
+private:
+  pcl::PointCloud<pcl::PointXYZI>::Ptr load_cloud(const std::string& filename) const {
+    std::string extension = boost::filesystem::path(filename).extension().string();
+    if(extension == ".pcd") {
+      pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>());
+      pcl::io::loadPCDFile(filename, *cloud);
+      return cloud;
+    } else if (extension == ".txt") {
+      std::ifstream ifs(filename);
+      if(!ifs) {
+        std::cerr << "warning: failed to open " << filename << std::endl;
+        return nullptr;
+      }
 
+      pcl::PointCloud<pcl::PointXYZI>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZI>());
+      while(!ifs.eof()) {
+        std::string line;
+        std::getline(ifs, line);
+        if(line.empty()) {
+          continue;
+        }
+
+        std::stringstream sst(line);
+
+        pcl::PointXYZI pt;
+        sst >> pt.x >> pt.y >> pt.z >> pt.intensity;
+
+        cloud->push_back(pt);
+      }
+
+      cloud->is_dense = false;
+      cloud->width = cloud->size();
+      cloud->height = 1;
+
+      return cloud;
+    }
+
+    std::cerr << "unknown extension: " << extension << std::endl;
+    std::cerr << "input file : " << filename << std::endl;
+    abort();
+    return nullptr;
+  }
+
+public:
   unsigned long stamp_sec;
   unsigned long stamp_usec;
   Eigen::Isometry3d pose;
@@ -118,14 +159,75 @@ private:
   std::unique_ptr<glk::PointCloudBuffer> cloud_buffer;
 };
 
-
 /**
  * @brief Odometry frame set
  *
  */
 class OdometrySet {
 public:
-  OdometrySet(guik::ProgressInterface& progress, const std::string& directory) {
+  enum Format {
+    ROS = 1,
+    YOKOZUKA = 2
+  };
+
+  OdometrySet(guik::ProgressInterface& progress, const std::string& directory, Format format) {
+    switch(format) {
+      default:
+      case ROS:
+        load_ros(progress, directory);
+        break;
+
+      case YOKOZUKA:
+        load_yokozuka(progress, directory);
+        break;
+    }
+  }
+
+  void select_keyframes(float keyframe_delta_x, float keyframe_delta_angle) {
+    if(frames.empty()) {
+      return;
+    }
+
+    keyframes.clear();
+    keyframes.push_back(frames.front());
+    for(const auto& frame : frames) {
+      const auto& last_keyframe_pose = keyframes.back()->pose;
+      const auto& current_frame_pose = frame->pose;
+
+      Eigen::Isometry3d delta = last_keyframe_pose.inverse() * current_frame_pose;
+      double delta_x = delta.translation().norm();
+      double delta_angle = Eigen::AngleAxisd(delta.linear()).angle();
+
+      if(delta_x > keyframe_delta_x || delta_angle > keyframe_delta_angle) {
+        keyframes.push_back(frame);
+      }
+    }
+  }
+
+  void draw(glk::GLSLShader& shader, float downsample_resolution = 0.1f) {
+    for(const auto& keyframe : keyframes) {
+      keyframe->draw(shader, downsample_resolution);
+    }
+  }
+
+  bool save(guik::ProgressInterface& progress, const std::string& dst_directory) {
+    if(keyframes.empty()) {
+      return false;
+    }
+
+    if(!save_graph(progress, dst_directory + "/graph.g2o")) {
+      return false;
+    }
+
+    if(!save_keyframes(progress, dst_directory)) {
+      return false;
+    }
+
+    return true;
+  }
+
+private:
+  void load_ros(guik::ProgressInterface& progress, const std::string& directory) {
     progress.set_text("sweeping the directory");
 
     boost::filesystem::directory_iterator itr(directory);
@@ -151,7 +253,7 @@ public:
     progress.set_current(0);
 
     std::sort(filenames.begin(), filenames.end());
-    for(const auto& filename: filenames) {
+    for(const auto& filename : filenames) {
       progress.increment();
 
       auto frame = OdometryFrame::load(directory + "/" + filename + ".pcd", directory + "/" + filename + ".odom");
@@ -163,50 +265,61 @@ public:
     }
   }
 
-  void select_keyframes(float keyframe_delta_x, float keyframe_delta_angle) {
-    if(frames.empty()) {
+  void load_yokozuka(guik::ProgressInterface& progress, const std::string& directory) {
+    progress.set_text("loading graph structure");
+    progress.increment();
+
+    std::ifstream ifs(directory + "/Scan3Graph.txt");
+    if(!ifs) {
       return;
     }
 
-    keyframes.clear();
-    keyframes.push_back(frames.front());
-    for(const auto& frame: frames) {
-      const auto& last_keyframe_pose = keyframes.back()->pose;
-      const auto& current_frame_pose = frame->pose;
+    std::vector<unsigned long> frame_ids;
+    std::vector<Eigen::Isometry3d, Eigen::aligned_allocator<Eigen::Isometry3d>> frame_poses;
 
-      Eigen::Isometry3d delta = last_keyframe_pose.inverse() * current_frame_pose;
-      double delta_x = delta.translation().norm();
-      double delta_angle = Eigen::AngleAxisd(delta.linear()).angle();
+    while(!ifs.eof()) {
+      std::string line;
+      std::getline(ifs, line);
 
-      if(delta_x > keyframe_delta_x || delta_angle > keyframe_delta_angle) {
-        keyframes.push_back(frame);
+      if(line.empty()) {
+        continue;
       }
+
+      std::stringstream sst(line);
+
+      long id;
+      Eigen::Vector3d trans;
+      Eigen::Quaterniond quat;
+
+      sst >> id >> trans.x() >> trans.y() >> trans.z() >> quat.x() >> quat.y() >> quat.z() >> quat.w();
+
+      Eigen::Isometry3d pose = Eigen::Isometry3d::Identity();
+      pose.translation() = trans;
+      pose.linear() = quat.toRotationMatrix();
+
+      frame_ids.push_back(id);
+      frame_poses.push_back(pose);
+    }
+
+    progress.set_text("loading frames");
+    progress.set_maximum(frame_ids.size());
+    for(int i = 0; i < frame_ids.size(); i++) {
+      progress.increment();
+
+      const auto& id = frame_ids[i];
+      const auto& pose = frame_poses[i];
+
+      std::string cloud_filename = (boost::format("%s/Scan3Map/submap-%03d.txt") % directory % id).str();
+      auto frame = OdometryFrame::load(cloud_filename, pose, id, 0);
+
+      if(frame == nullptr) {
+        continue;
+      }
+
+      frames.push_back(frame);
     }
   }
 
-  void draw(glk::GLSLShader& shader, float downsample_resolution=0.1f) {
-    for(const auto& keyframe: keyframes) {
-      keyframe->draw(shader, downsample_resolution);
-    }
-  }
-
-  bool save(guik::ProgressInterface& progress, const std::string& dst_directory) {
-    if(keyframes.empty()) {
-      return false;
-    }
-
-    if(!save_graph(progress, dst_directory + "/graph.g2o")) {
-      return false;
-    }
-
-    if(!save_keyframes(progress, dst_directory)) {
-      return false;
-    }
-
-    return true;
-  }
-
-private:
   bool save_graph(guik::ProgressInterface& progress, const std::string& filename) const {
     progress.set_text("save graph file");
     progress.increment();
@@ -216,7 +329,7 @@ private:
       return false;
     }
 
-    for(int i=0; i<keyframes.size(); i++) {
+    for(int i = 0; i < keyframes.size(); i++) {
       std::unique_ptr<g2o::VertexSE3> v(new g2o::VertexSE3());
       v->setEstimate(keyframes[i]->pose);
 
@@ -226,7 +339,7 @@ private:
     }
     ofs << "FIX 0" << std::endl;
 
-    for(int i=0; i<keyframes.size()-1; i++) {
+    for(int i = 0; i < keyframes.size() - 1; i++) {
       const auto& delta_pose = keyframes[i]->pose.inverse() * keyframes[i + 1]->pose;
       std::unique_ptr<g2o::EdgeSE3> e(new g2o::EdgeSE3());
       e->setMeasurement(delta_pose);
@@ -243,7 +356,7 @@ private:
   }
 
   bool save_keyframes(guik::ProgressInterface& progress, const std::string& directory) const {
-    for(int i=0; i<keyframes.size(); i++) {
+    for(int i = 0; i < keyframes.size(); i++) {
       std::string keyframe_directory = (boost::format("%s/%06d") % directory % i).str();
       boost::filesystem::create_directories(keyframe_directory);
 
@@ -268,7 +381,6 @@ private:
   std::vector<OdometryFrame::Ptr> frames;
   std::vector<OdometryFrame::Ptr> keyframes;
 };
-
 
 /**
  * @brief Application to convert an odometry sequence into the graph description format
@@ -387,11 +499,21 @@ private:
   void main_menu() {
     ImGui::BeginMainMenuBar();
 
+    OdometrySet::Format odometry_format;
     bool open_dialog = false;
     bool save_dialog = false;
     if(ImGui::BeginMenu("File")) {
-      if(ImGui::MenuItem("Open")) {
-        open_dialog = true;
+      if(ImGui::BeginMenu("Open")) {
+        if(ImGui::MenuItem("ROS")) {
+          odometry_format = OdometrySet::ROS;
+          open_dialog = true;
+        }
+        if(ImGui::MenuItem("Yoko")) {
+          odometry_format = OdometrySet::YOKOZUKA;
+          open_dialog = true;
+        }
+
+        ImGui::EndMenu();
       }
 
       if(ImGui::MenuItem("Save")) {
@@ -405,7 +527,7 @@ private:
       ImGui::EndMenu();
     }
 
-    open(open_dialog);
+    open(open_dialog, odometry_format);
     save(save_dialog);
 
     if(ImGui::BeginMenu("View")) {
@@ -441,7 +563,7 @@ private:
    *
    * @param open_dialog
    */
-  void open(bool open_dialog) {
+  void open(bool open_dialog, const OdometrySet::Format& format) {
     if(progress->run("open")) {
       auto result = progress->result<std::shared_ptr<OdometrySet>>();
       if(result == nullptr) {
@@ -470,7 +592,7 @@ private:
     }
 
     std::string directory = dialog.result();
-    auto open_task = [=](guik::ProgressInterface& p) { return std::make_shared<OdometrySet>(p, directory); };
+    auto open_task = [=](guik::ProgressInterface& p) { return std::make_shared<OdometrySet>(p, directory, format); };
     progress->open<std::shared_ptr<OdometrySet>>("open", open_task);
   }
 
@@ -536,7 +658,6 @@ private:
 };
 
 }  // namespace hdl_graph_slam
-
 
 /**
  * @brief main

@@ -15,7 +15,7 @@ namespace guik {
 Application::Application() : window(nullptr) {}
 
 Application ::~Application() {
-  if (!window) {
+  if(!window) {
     return;
   }
 
@@ -35,7 +35,7 @@ void fb_size_callback(GLFWwindow* window, int width, int height) {
 
 bool Application::init(const Eigen::Vector2i& size, const char* glsl_version) {
   glfwSetErrorCallback([](int err, const char* desc) { std::cerr << "glfw error " << err << ": " << desc << std::endl; });
-  if (!glfwInit()) {
+  if(!glfwInit()) {
     std::cerr << "failed to initialize GLFW" << std::endl;
     return false;
   }
@@ -44,7 +44,7 @@ bool Application::init(const Eigen::Vector2i& size, const char* glsl_version) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
   window = glfwCreateWindow(size[0], size[1], "screen", nullptr, nullptr);
-  if (window == nullptr) {
+  if(window == nullptr) {
     return false;
   }
   appmap[window] = this;
@@ -54,7 +54,7 @@ bool Application::init(const Eigen::Vector2i& size, const char* glsl_version) {
   glfwMakeContextCurrent(window);
   glfwSwapInterval(1);
 
-  if (gl3wInit()) {
+  if(gl3wInit()) {
     std::cerr << "failed to initialize GL3W" << std::endl;
     return false;
   }
@@ -72,7 +72,7 @@ bool Application::init(const Eigen::Vector2i& size, const char* glsl_version) {
 }
 
 void Application::run() {
-  while (!glfwWindowShouldClose(window)) {
+  while(!glfwWindowShouldClose(window)) {
     glfwPollEvents();
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -95,13 +95,23 @@ void Application::run() {
   }
 }
 
-void Application::close() { glfwSetWindowShouldClose(window, 1); }
+void Application::close() {
+  glfwSetWindowShouldClose(window, 1);
+}
+
+Eigen::Vector2i Application::framebuffer_size() {
+  int width, height;
+  glfwGetFramebufferSize(window, &width, &height);
+  return Eigen::Vector2i(width, height);
+}
 
 void Application::framebuffer_size_callback(const Eigen::Vector2i& size) {
   std::cout << "FB:" << size.transpose() << std::endl;
 }
 
-void Application::draw_ui() { ImGui::ShowDemoWindow(); }
+void Application::draw_ui() {
+  ImGui::ShowDemoWindow();
+}
 
 void Application::draw_gl() {}
 

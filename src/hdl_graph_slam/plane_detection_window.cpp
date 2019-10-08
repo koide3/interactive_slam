@@ -88,7 +88,7 @@ RegionGrowingResult::Ptr PlaneDetectionWindow::region_growing(guik::ProgressInte
   progress.set_text("normal estimation");
   progress.increment();
   pcl::PointCloud<pcl::Normal>::Ptr accumulated_normals(new pcl::PointCloud<pcl::Normal>());
-  pcl::NormalEstimation<pcl::PointXYZI, pcl::Normal> ne;
+  pcl::NormalEstimationOMP<pcl::PointXYZI, pcl::Normal> ne;
 
   pcl::search::KdTree<pcl::PointXYZI>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZI>());
   ne.setInputCloud(accumulated_points);

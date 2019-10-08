@@ -4,6 +4,7 @@
 #include <mutex>
 #include <thread>
 #include <memory>
+#include <random>
 #include <boost/optional.hpp>
 
 #include <imgui.h>
@@ -65,11 +66,13 @@ private:
   bool show_window;
   std::shared_ptr<InteractiveGraphView>& graph;
 
+  std::mt19937 mt;
   std::atomic_bool running;
   std::thread refinement_thread;
 
   std::mutex edges_mutex;
   std::vector<EdgeInfo> edges;
+  g2o::EdgeSE3* inspected_edge;
 
   int scan_matching_method;
   float scan_matching_resolution;

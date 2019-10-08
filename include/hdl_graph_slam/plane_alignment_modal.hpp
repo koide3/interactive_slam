@@ -36,6 +36,9 @@ private:
 
   int plane_mode;
   float information_scale;
+
+  int robust_kernel;
+  float robust_kernel_delta;
 };
 
 }  // namespace hdl_graph_slam

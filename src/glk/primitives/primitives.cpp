@@ -7,6 +7,7 @@
 
 #include <glk/primitives/grid.hpp>
 #include <glk/primitives/cube.hpp>
+#include <glk/primitives/cone.hpp>
 #include <glk/primitives/icosahedron.hpp>
 #include <glk/primitives/coordinate_system.hpp>
 #include <glk/loaders/ply_loader.hpp>
@@ -16,8 +17,8 @@ namespace glk {
 Primitives* Primitives::instance_ = nullptr;
 
 const glk::Drawable& Primitives::primitive(PrimitiveType type) {
-  if (meshes[type] == nullptr) {
-    switch (type) {
+  if(meshes[type] == nullptr) {
+    switch(type) {
       default:
         std::cerr << "error : unknown primitive type " << type << std::endl;
         break;
@@ -36,6 +37,11 @@ const glk::Drawable& Primitives::primitive(PrimitiveType type) {
       case CUBE: {
         glk::Cube cube;
         glk::Flatize flat(cube.vertices, cube.indices);
+        meshes[type].reset(new glk::Mesh(flat.vertices, flat.normals, flat.indices));
+      } break;
+      case CONE: {
+        glk::Cone cone;
+        glk::Flatize flat(cone.vertices, cone.indices);
         meshes[type].reset(new glk::Mesh(flat.vertices, flat.normals, flat.indices));
       } break;
       case GRID: {

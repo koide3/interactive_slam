@@ -57,8 +57,9 @@ private:
 
   int robust_kernel;
   float robust_kernel_delta;
-};
 
+  bool optimize;
+};
 }
 
 #endif

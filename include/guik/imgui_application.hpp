@@ -21,6 +21,7 @@ public:
 
   void close();
 
+  Eigen::Vector2i framebuffer_size();
   virtual void framebuffer_size_callback(const Eigen::Vector2i& size);
 
   virtual void draw_ui();

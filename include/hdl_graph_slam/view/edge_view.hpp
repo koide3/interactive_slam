@@ -20,6 +20,7 @@ public:
   virtual ~EdgeView();
 
   long id() const;
+  virtual Eigen::Vector3f representative_point() const = 0;
 
   virtual void context_menu();
 

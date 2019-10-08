@@ -35,14 +35,13 @@ public:
     show_imgui_demo = false;
     show_draw_config_window = false;
 
-    framebuffer_size = size;
     right_clicked_pos.setZero();
     progress.reset(new guik::ProgressModal("progress modal"));
 
     std::string package_path = ros::package::getPath("interactive_slam");
     std::string data_directory = package_path + "/data";
 
-    main_canvas.reset(new guik::GLCanvas(data_directory, size));
+    main_canvas.reset(new guik::GLCanvas(data_directory, framebuffer_size()));
     if(!main_canvas->ready()) {
       close();
     }
@@ -117,10 +116,10 @@ public:
     main_canvas->shader->set_uniform("color_mode", 1);
     main_canvas->shader->set_uniform("model_matrix", (Eigen::Translation3f(Eigen::Vector3f::UnitZ() * -0.02) * Eigen::Isometry3f::Identity()).matrix());
     main_canvas->shader->set_uniform("material_color", Eigen::Vector4f(0.8f, 0.8f, 0.8f, 1.0f));
+
     const auto& grid = glk::Primitives::instance()->primitive(glk::Primitives::GRID);
     grid.draw(*main_canvas->shader);
 
-    main_canvas->shader->set_uniform("point_scale", 50.0f);
     {
       std::lock_guard<std::mutex> lock(graph->optimization_mutex);
       graph->draw(draw_flags, *main_canvas->shader);
@@ -145,7 +144,6 @@ public:
    */
   virtual void framebuffer_size_callback(const Eigen::Vector2i& size) override {
     main_canvas->set_size(size);
-    framebuffer_size = size;
   }
 
 private:
@@ -262,7 +260,7 @@ private:
       }
 
       if(ImGui::MenuItem("Optimize")) {
-        graph->optimize();
+        graph->optimize(1024);
       }
 
       ImGui::EndMenu();
@@ -589,16 +587,26 @@ private:
         }
 
         if(ImGui::BeginMenu("Prior")) {
-          if(ImGui::MenuItem("UnitX")) {
+          if(ImGui::MenuItem("Ground(UnitZ, Zero)")) {
+            graph->add_edge_prior_normal(picked_id, Eigen::Vector3d::UnitZ(), 1000.0);
+            graph->add_edge_prior_distance(picked_id, 0.0, 1000.0);
+            graph->optimize(1024);
+          }
+
+          if(ImGui::MenuItem("Normal:UnitX")) {
             graph->add_edge_prior_normal(picked_id, Eigen::Vector3d::UnitX(), 1000.0);
             graph->optimize();
           }
-          if(ImGui::MenuItem("UnitY")) {
+          if(ImGui::MenuItem("Normal:UnitY")) {
             graph->add_edge_prior_normal(picked_id, Eigen::Vector3d::UnitY(), 1000.0);
             graph->optimize();
           }
-          if(ImGui::MenuItem("UnitZ")) {
+          if(ImGui::MenuItem("Normal:UnitZ")) {
             graph->add_edge_prior_normal(picked_id, Eigen::Vector3d::UnitZ(), 1000.0);
+            graph->optimize();
+          }
+          if(ImGui::MenuItem("Distance:Zero")) {
+            graph->add_edge_prior_distance(picked_id, 0.0, 1000.0);
             graph->optimize();
           }
 
@@ -616,7 +624,6 @@ private:
 
 private:
   DrawFlags draw_flags;
-  Eigen::Vector2i framebuffer_size;
   Eigen::Vector2i right_clicked_pos;
 
   std::shared_ptr<InteractiveGraphView> graph;
