@@ -71,21 +71,24 @@ public:
       ImGui::ShowDemoWindow(&show_imgui_demo);
     }
 
-    {
-      std::lock_guard<std::mutex> lock(graph->optimization_mutex);
-
-      ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground;
-      ImGui::Begin("##stats", nullptr, flags);
+    bool optimizing = false;
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground;
+    ImGui::Begin("##stats", nullptr, flags);
+    if(graph->optimization_mutex.try_lock()) {
       ImGui::Text("Graph");
       ImGui::Text("# vertices: %d", graph->num_vertices());
       ImGui::Text("# edges: %d", graph->num_edges());
       ImGui::Text("time: %.1f[msec]", graph->elapsed_time_msec);
       ImGui::Text("chi2: %.3f -> %.3f", graph->chi2_before, graph->chi2_after);
       ImGui::Text("iterations: %d", graph->iterations);
-
       ImGui::Text("\nFPS: %.3f fps", ImGui::GetIO().Framerate);
-      ImGui::End();
+      graph->optimization_mutex.unlock();
+    } else {
+      optimizing = true;
+      ImGui::Text("%c %s", "|/-\\"[(int)(ImGui::GetTime() / 0.05f) & 3], "optimizing");
+      ImGui::Text("\nFPS: %.3f fps", ImGui::GetIO().Framerate);
     }
+    ImGui::End();
 
     main_canvas->draw_ui();
 
@@ -104,37 +107,39 @@ public:
    *
    */
   virtual void draw_gl() override {
-    glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+    if(graph->optimization_mutex.try_lock()) {
+      glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
-    main_canvas->bind();
-    main_canvas->shader->set_uniform("color_mode", 2);
-    main_canvas->shader->set_uniform("model_matrix", (Eigen::UniformScaling<float>(3.0f) * Eigen::Isometry3f::Identity()).matrix());
+      main_canvas->bind();
+      main_canvas->shader->set_uniform("color_mode", 2);
+      main_canvas->shader->set_uniform("model_matrix", (Eigen::UniformScaling<float>(3.0f) * Eigen::Isometry3f::Identity()).matrix());
 
-    const auto& coord = glk::Primitives::instance()->primitive(glk::Primitives::COORDINATE_SYSTEM);
-    coord.draw(*main_canvas->shader);
+      const auto& coord = glk::Primitives::instance()->primitive(glk::Primitives::COORDINATE_SYSTEM);
+      coord.draw(*main_canvas->shader);
 
-    main_canvas->shader->set_uniform("color_mode", 1);
-    main_canvas->shader->set_uniform("model_matrix", (Eigen::Translation3f(Eigen::Vector3f::UnitZ() * -0.02) * Eigen::Isometry3f::Identity()).matrix());
-    main_canvas->shader->set_uniform("material_color", Eigen::Vector4f(0.8f, 0.8f, 0.8f, 1.0f));
+      main_canvas->shader->set_uniform("color_mode", 1);
+      main_canvas->shader->set_uniform("model_matrix", (Eigen::Translation3f(Eigen::Vector3f::UnitZ() * -0.02) * Eigen::Isometry3f::Identity()).matrix());
+      main_canvas->shader->set_uniform("material_color", Eigen::Vector4f(0.8f, 0.8f, 0.8f, 1.0f));
 
-    const auto& grid = glk::Primitives::instance()->primitive(glk::Primitives::GRID);
-    grid.draw(*main_canvas->shader);
+      const auto& grid = glk::Primitives::instance()->primitive(glk::Primitives::GRID);
+      grid.draw(*main_canvas->shader);
 
-    {
-      std::lock_guard<std::mutex> lock(graph->optimization_mutex);
       graph->draw(draw_flags, *main_canvas->shader);
+
+      plane_detection_window->draw_gl(*main_canvas->shader);
+      plane_alignment_modal->draw_gl(*main_canvas->shader);
+      manual_loop_close_modal->draw_gl(*main_canvas->shader);
+      automatic_loop_close_window->draw_gl(*main_canvas->shader);
+      edge_refinement_window->draw_gl(*main_canvas->shader);
+
+      main_canvas->unbind();
+      main_canvas->render_to_screen();
+
+      glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
+      graph->optimization_mutex.unlock();
+    } else {
+      main_canvas->render_to_screen();
     }
-
-    plane_detection_window->draw_gl(*main_canvas->shader);
-    plane_alignment_modal->draw_gl(*main_canvas->shader);
-    manual_loop_close_modal->draw_gl(*main_canvas->shader);
-    automatic_loop_close_window->draw_gl(*main_canvas->shader);
-    edge_refinement_window->draw_gl(*main_canvas->shader);
-
-    main_canvas->unbind();
-    main_canvas->render_to_screen();
-
-    glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
   }
 
   /**
@@ -260,7 +265,7 @@ private:
       }
 
       if(ImGui::MenuItem("Optimize")) {
-        graph->optimize(1024);
+        graph->optimize_background(1024);
       }
 
       ImGui::EndMenu();
@@ -590,24 +595,24 @@ private:
           if(ImGui::MenuItem("Ground(UnitZ, Zero)")) {
             graph->add_edge_prior_normal(picked_id, Eigen::Vector3d::UnitZ(), 1000.0);
             graph->add_edge_prior_distance(picked_id, 0.0, 1000.0);
-            graph->optimize(1024);
+            graph->optimize_background(1024);
           }
 
           if(ImGui::MenuItem("Normal:UnitX")) {
             graph->add_edge_prior_normal(picked_id, Eigen::Vector3d::UnitX(), 1000.0);
-            graph->optimize();
+            graph->optimize_background();
           }
           if(ImGui::MenuItem("Normal:UnitY")) {
             graph->add_edge_prior_normal(picked_id, Eigen::Vector3d::UnitY(), 1000.0);
-            graph->optimize();
+            graph->optimize_background();
           }
           if(ImGui::MenuItem("Normal:UnitZ")) {
             graph->add_edge_prior_normal(picked_id, Eigen::Vector3d::UnitZ(), 1000.0);
-            graph->optimize();
+            graph->optimize_background();
           }
           if(ImGui::MenuItem("Distance:Zero")) {
             graph->add_edge_prior_distance(picked_id, 0.0, 1000.0);
-            graph->optimize();
+            graph->optimize_background();
           }
 
           ImGui::EndMenu();

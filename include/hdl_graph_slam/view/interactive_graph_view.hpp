@@ -88,7 +88,6 @@ public:
   }
 
 public:
-  std::mutex optimization_mutex;
   std::unique_ptr<LineBuffer> line_buffer;
 
   std::vector<KeyFrameView::Ptr> keyframes_view;

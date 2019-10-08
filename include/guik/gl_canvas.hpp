@@ -22,7 +22,7 @@ public:
   void set_size(const Eigen::Vector2i& size);
   void mouse_control();
 
-  void bind();
+  void bind(bool clear_buffers = true);
   void unbind();
 
   void render_to_screen(int color_buffer_id = 0);

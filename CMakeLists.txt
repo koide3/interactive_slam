@@ -7,7 +7,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 find_package(catkin REQUIRED COMPONENTS roscpp ndt_omp hdl_graph_slam)
 
 find_package(GLM REQUIRED)
-find_package(GLEW REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(PCL REQUIRED)
 
@@ -90,7 +89,6 @@ add_executable(odometry2graph
 target_link_libraries(odometry2graph
   ${PCL_LIBRARIES}
   ${OPENGL_LIBRARIES}
-  ${GLEW_LIBRARIES}
   ${catkin_LIBRARIES}
   glfw
   guik
@@ -122,7 +120,6 @@ target_link_libraries(interactive_slam
   ${G2O_TYPES_SLAM3D}
   ${G2O_TYPES_SLAM3D_ADDONS}
   ${OPENGL_LIBRARIES}
-  ${GLEW_LIBRARIES}
   glfw
   guik
   imgui

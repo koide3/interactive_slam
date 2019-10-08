@@ -22,13 +22,17 @@
 
 namespace hdl_graph_slam {
 
-InteractiveGraph::InteractiveGraph() : GraphSLAM("lm_var_cholmod"), iterations(0), chi2_before(0.0), chi2_after(0.0), elapsed_time_msec(0.0) {
+InteractiveGraph::InteractiveGraph() : GraphSLAM("gn_var_cholmod"), iterations(0), chi2_before(0.0), chi2_after(0.0), elapsed_time_msec(0.0) {
   inf_calclator.reset(new InformationMatrixCalculator());
   inf_calclator->load(params);
   edge_id_gen = 0;
 }
 
-InteractiveGraph::~InteractiveGraph() {}
+InteractiveGraph::~InteractiveGraph() {
+  if(optimization_thread.joinable()) {
+    optimization_thread.join();
+  }
+}
 
 bool InteractiveGraph::load_map_data(const std::string& directory, guik::ProgressInterface& progress) {
   progress.set_title("Opening " + directory);
@@ -261,6 +265,32 @@ void InteractiveGraph::optimize(int num_iterations) {
 
   auto t2 = std::chrono::high_resolution_clock::now();
   elapsed_time_msec = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count() / 1000000.0;
+}
+
+void InteractiveGraph::optimize_background(int num_iterations) {
+  if(optimization_thread.joinable()) {
+    optimization_thread.join();
+  }
+
+  auto task = [this, num_iterations]() {
+    std::lock_guard<std::mutex> lock(optimization_mutex);
+    g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
+    auto t1 = std::chrono::high_resolution_clock::now();
+
+    int max_iterations = num_iterations;
+    if(num_iterations < 0) {
+      max_iterations = params.param<int>("g2o_solver_num_iterations", 64);
+    }
+
+    chi2_before = graph->chi2();
+    iterations = GraphSLAM::optimize(max_iterations);
+    chi2_after = graph->chi2();
+
+    auto t2 = std::chrono::high_resolution_clock::now();
+    elapsed_time_msec = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count() / 1000000.0;
+  };
+
+  optimization_thread = std::thread(task);
 }
 
 void InteractiveGraph::dump(const std::string& directory, guik::ProgressInterface& progress) {

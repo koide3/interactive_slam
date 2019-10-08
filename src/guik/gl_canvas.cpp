@@ -75,10 +75,12 @@ void GLCanvas::set_size(const Eigen::Vector2i& size) {
  * @brief
  *
  */
-void GLCanvas::bind() {
+void GLCanvas::bind(bool clear_buffers) {
   frame_buffer->bind();
   glDisable(GL_SCISSOR_TEST);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  if(clear_buffers) {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  }
 
   GLint clear_color[] = {0, -1, 0, 0};
   glClearTexImage(frame_buffer->color(1).id(), 0, GL_RGBA_INTEGER, GL_INT, clear_color);

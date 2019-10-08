@@ -2,6 +2,8 @@
 #define HDL_GRAPH_SLAM_INTERACTIVE_GRAPH_HPP
 
 #include <regex>
+#include <mutex>
+#include <thread>
 #include <unordered_map>
 
 #include <Eigen/Dense>
@@ -41,7 +43,8 @@ public:
   bool add_edge_prior_normal(long plane_vertex_id, const Eigen::Vector3d& normal, double information_scale, const std::string& robust_kernel = "NONE", double robust_kernel_delta = 0.1);
   bool add_edge_prior_distance(long plane_vertex_id, double distance, double information_scale, const std::string& robust_kernel = "NONE", double robust_kernel_delta = 0.1);
 
-  void optimize(int num_iterations=-1);
+  void optimize(int num_iterations = -1);
+  void optimize_background(int num_iterations = -1);
 
   void dump(const std::string& directory, guik::ProgressInterface& progress);
   bool save_pointcloud(const std::string& filename, guik::ProgressInterface& progress);
@@ -55,8 +58,11 @@ private:
 
 private:
   long edge_id_gen;
+  std::thread optimization_thread;
 
 public:
+  std::mutex optimization_mutex;
+
   ParameterServer params;
 
   int iterations;
