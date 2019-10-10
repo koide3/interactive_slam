@@ -1,4 +1,5 @@
 #version 330
+uniform float point_size;
 uniform float point_scale;
 uniform mat4 model_matrix;
 uniform mat4 view_matrix;
@@ -59,5 +60,5 @@ void main() {
 
     vec3 ndc = gl_Position.xyz / gl_Position.w;
     float z_dist = 1.0 - ndc.z;
-    gl_PointSize = point_scale * z_dist;
+    gl_PointSize = point_scale * point_size * z_dist;
 }

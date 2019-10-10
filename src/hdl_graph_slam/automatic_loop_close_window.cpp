@@ -222,7 +222,7 @@ void AutomaticLoopCloseWindow::draw_gl(glk::GLSLShader& shader) {
   }
 
   shader.set_uniform("color_mode", 1);
-  shader.set_uniform("point_scale", 100.0f);
+  shader.set_uniform("point_scale", 2.0f);
 
   DrawFlags draw_flags;
   loop_source->draw(draw_flags, shader, Eigen::Vector4f(0.0f, 0.0f, 1.0f, 1.0f), loop_source->lock()->node->estimate().matrix().cast<float>());

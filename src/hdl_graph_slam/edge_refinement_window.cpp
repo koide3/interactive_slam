@@ -5,6 +5,8 @@
 #include <glk/primitives/primitives.hpp>
 
 #include <pclomp/ndt_omp.h>
+#include <pcl/registration/gicp.h>
+
 #include <hdl_graph_slam/information_matrix_calculator.hpp>
 
 namespace hdl_graph_slam {
@@ -42,9 +44,11 @@ void EdgeRefinementWindow::draw_ui() {
   ImGui::Begin("edge refinement", &show_window, ImGuiWindowFlags_AlwaysAutoResize);
 
   ImGui::Text("Scan matching");
-  const char* methods[] = {"NDT"};
+  const char* methods[] = {"GICP", "NDT"};
   ImGui::Combo("Method", &scan_matching_method, methods, IM_ARRAYSIZE(methods));
-  ImGui::DragFloat("Resolution", &scan_matching_resolution, 0.1f, 0.1f, 20.0f);
+  if(scan_matching_method == 1) {
+    ImGui::DragFloat("Resolution", &scan_matching_resolution, 0.1f, 0.1f, 20.0f);
+  }
 
   ImGui::Text("Robust kernel");
   const char* kernels[] = {"NONE", "Huber"};
@@ -146,9 +150,17 @@ void EdgeRefinementWindow::refinement() {
   double fitness_score_before = InformationMatrixCalculator::calc_fitness_score(v1->second->cloud, v2->second->cloud, edge.edge->measurement(), 2.0f);
 
   pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr registration;
-  auto ndt = boost::make_shared<pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>>();
-  ndt->setResolution(scan_matching_resolution);
-  registration = ndt;
+  switch(scan_matching_method) {
+    case 0: {
+      auto gicp = boost::make_shared<pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>>();
+      registration = gicp;
+    } break;
+    case 1: {
+      auto ndt = boost::make_shared<pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>>();
+      ndt->setResolution(scan_matching_resolution);
+      registration = ndt;
+    } break;
+  }
 
   Eigen::Isometry3d relative = v1->second->estimate().inverse() * v2->second->estimate();
   double fitness_score_before2 = InformationMatrixCalculator::calc_fitness_score(v1->second->cloud, v2->second->cloud, relative, 2.0f);

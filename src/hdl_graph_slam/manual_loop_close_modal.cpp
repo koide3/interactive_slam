@@ -332,7 +332,7 @@ void ManualLoopCloseModal::scan_matching() {
 
 void ManualLoopCloseModal::draw_gl(glk::GLSLShader& shader) {
   DrawFlags draw_flags;
-  shader.set_uniform("point_scale", 100.0f);
+  shader.set_uniform("point_scale", 2.0f);
   if (begin_keyframe) {
     begin_keyframe->draw(draw_flags, shader, Eigen::Vector4f(0.0f, 0.0f, 1.0f, 1.0f), begin_keyframe->lock()->estimate().matrix().cast<float>());
   }
@@ -352,7 +352,7 @@ void ManualLoopCloseModal::draw_canvas() {
 
   canvas->bind();
   canvas->shader->set_uniform("color_mode", 1);
-  canvas->shader->set_uniform("point_scale", 100.0f);
+  canvas->shader->set_uniform("point_scale", 2.0f);
 
   Eigen::Isometry3d relative = begin_keyframe_pose.inverse() * end_keyframe_pose;
   begin_keyframe->draw(draw_flags, *canvas->shader, Eigen::Vector4f(0.0f, 0.0f, 1.0f, 1.0f), Eigen::Matrix4f::Identity());

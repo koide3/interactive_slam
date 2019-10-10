@@ -44,7 +44,7 @@ public:
   std::unique_ptr<guik::ProjectionControl> projection_control;
 
 private:
-  float point_scale;
+  float point_size;
   float min_z;
   float max_z;
   bool z_clipping;

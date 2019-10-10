@@ -39,7 +39,7 @@ public:
 public:
   OdometryFrame(const std::string& raw_cloud_path, const Eigen::Isometry3d& pose, unsigned long stamp_sec, unsigned long stamp_usec) : raw_cloud_path(raw_cloud_path), cloud_(nullptr), pose(pose), stamp_sec(stamp_sec), stamp_usec(stamp_usec) {}
 
-  OdometryFrame(const std::string& raw_cloud_path, const Eigen::Isometry3d& pose) : raw_cloud_path(raw_cloud_path), cloud_(nullptr), pose(pose), downsample_resolution(0.2f) {
+  OdometryFrame(const std::string& raw_cloud_path, const Eigen::Isometry3d& pose) : raw_cloud_path(raw_cloud_path), cloud_(nullptr), pose(pose), downsample_resolution(0.1f) {
     char underscore;
     std::stringstream sst(boost::filesystem::path(raw_cloud_path).filename().string());
     sst >> stamp_sec >> underscore >> stamp_usec;
@@ -343,8 +343,12 @@ private:
       const auto& delta_pose = keyframes[i]->pose.inverse() * keyframes[i + 1]->pose;
       std::unique_ptr<g2o::EdgeSE3> e(new g2o::EdgeSE3());
       e->setMeasurement(delta_pose);
-      e->setInformation(Eigen::MatrixXd::Identity(6, 6));
 
+      Eigen::MatrixXd inf = Eigen::MatrixXd::Identity(6, 6);
+      inf.block<3, 3>(0, 0) *= 10.0;
+      inf.block<3, 3>(3, 3) *= 20.0;
+
+      e->setInformation(inf);
       ofs << "EDGE_SE3:QUAT " << i << " " << i + 1 << " ";
       e->write(ofs);
       ofs << std::endl;
@@ -471,7 +475,7 @@ public:
     const auto& grid = glk::Primitives::instance()->primitive(glk::Primitives::GRID);
     grid.draw(*main_canvas->shader);
 
-    main_canvas->shader->set_uniform("point_scale", 50.0f);
+    main_canvas->shader->set_uniform("point_scale", 1.0f);
     if(odometry_set) {
       odometry_set->draw(*main_canvas->shader, downsample_resolution);
     }

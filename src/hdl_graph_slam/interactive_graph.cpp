@@ -252,11 +252,17 @@ bool InteractiveGraph::add_edge_prior_distance(long plane_vertex_id, double dist
 }
 
 void InteractiveGraph::optimize(int num_iterations) {
+  optimization_stream.str("");
+  optimization_stream.clear();
+
+  std::streambuf* cerr_buf = std::cerr.rdbuf();
+  std::cerr.rdbuf(optimization_stream.rdbuf());
+
   g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
   auto t1 = std::chrono::high_resolution_clock::now();
 
   if(num_iterations < 0) {
-    num_iterations = params.param<int>("g2o_solver_num_iterations", 64);
+    num_iterations = params.param<int>("g2o_solver_num_iterations", 10);
   }
 
   chi2_before = graph->chi2();
@@ -265,6 +271,8 @@ void InteractiveGraph::optimize(int num_iterations) {
 
   auto t2 = std::chrono::high_resolution_clock::now();
   elapsed_time_msec = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count() / 1000000.0;
+
+  std::cerr.rdbuf(cerr_buf);
 }
 
 void InteractiveGraph::optimize_background(int num_iterations) {
@@ -272,14 +280,20 @@ void InteractiveGraph::optimize_background(int num_iterations) {
     optimization_thread.join();
   }
 
+  optimization_stream.str("");
+  optimization_stream.clear();
+
   auto task = [this, num_iterations]() {
+    std::streambuf* cerr_buf = std::cerr.rdbuf();
+    std::cerr.rdbuf(optimization_stream.rdbuf());
+
     std::lock_guard<std::mutex> lock(optimization_mutex);
     g2o::SparseOptimizer* graph = dynamic_cast<g2o::SparseOptimizer*>(this->graph.get());
     auto t1 = std::chrono::high_resolution_clock::now();
 
     int max_iterations = num_iterations;
     if(num_iterations < 0) {
-      max_iterations = params.param<int>("g2o_solver_num_iterations", 64);
+      max_iterations = params.param<int>("g2o_solver_num_iterations", 10);
     }
 
     chi2_before = graph->chi2();
@@ -288,9 +302,32 @@ void InteractiveGraph::optimize_background(int num_iterations) {
 
     auto t2 = std::chrono::high_resolution_clock::now();
     elapsed_time_msec = std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count() / 1000000.0;
+
+    std::cerr.rdbuf(cerr_buf);
   };
 
   optimization_thread = std::thread(task);
+}
+
+std::string InteractiveGraph::graph_statistics(bool update) {
+  if(optimization_mutex.try_lock()) {
+    std::stringstream sst;
+    sst << "Graph\n";
+    sst << boost::format("# vertices: %d") % num_vertices() << "\n";
+    sst << boost::format("# edges: %d") % num_edges() << "\n";
+    sst << boost::format("time: %.1f[msec]") % elapsed_time_msec << "\n";
+    sst << boost::format("chi2: %.3f -> %.3f") % chi2_before % chi2_after << "\n";
+    sst << boost::format("iterations: %d") % iterations;
+
+    graph_stats = sst.str();
+    optimization_mutex.unlock();
+  }
+
+  return graph_stats;
+}
+
+std::string InteractiveGraph::optimization_messages() const {
+  return optimization_stream.str();
 }
 
 void InteractiveGraph::dump(const std::string& directory, guik::ProgressInterface& progress) {

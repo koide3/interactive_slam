@@ -298,7 +298,7 @@ void PlaneDetectionWindow::draw_gl(glk::GLSLShader& shader) {
   }
 
   shader.set_uniform("color_mode", 1);
-  shader.set_uniform("point_scale", 200.0f);
+  shader.set_uniform("point_scale", 4.0f);
 
   if (plane_detection_result) {
     shader.set_uniform("material_color", Eigen::Vector4f(0.0f, 0.5f, 1.0f, 1.0f));

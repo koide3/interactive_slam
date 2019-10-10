@@ -46,12 +46,16 @@ public:
   void optimize(int num_iterations = -1);
   void optimize_background(int num_iterations = -1);
 
+  std::string graph_statistics(bool update=false);
+  std::string optimization_messages() const;
+
   void dump(const std::string& directory, guik::ProgressInterface& progress);
   bool save_pointcloud(const std::string& filename, guik::ProgressInterface& progress);
 
   using GraphSLAM::graph;
   using GraphSLAM::num_edges;
   using GraphSLAM::num_vertices;
+  using GraphSLAM::set_solver;
 
 private:
   bool load_keyframes(const std::string& directory, guik::ProgressInterface& progress);
@@ -61,7 +65,10 @@ private:
   std::thread optimization_thread;
 
 public:
-  std::mutex optimization_mutex;
+  mutable std::mutex optimization_mutex;
+
+  std::string graph_stats;
+  std::stringstream optimization_stream;
 
   ParameterServer params;
 
@@ -71,7 +78,6 @@ public:
   double elapsed_time_msec;
 
   std::unordered_map<long, InteractiveKeyFrame::Ptr> keyframes;
-
   std::unique_ptr<InformationMatrixCalculator> inf_calclator;
 };
 

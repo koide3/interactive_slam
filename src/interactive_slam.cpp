@@ -71,24 +71,41 @@ public:
       ImGui::ShowDemoWindow(&show_imgui_demo);
     }
 
-    bool optimizing = false;
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground;
     ImGui::Begin("##stats", nullptr, flags);
+    std::string graph_stats = graph->graph_statistics();
+    ImGui::Text(graph_stats.c_str());
+    ImGui::Text("\nFPS: %.3f fps", ImGui::GetIO().Framerate);
+    ImGui::End();
+
     if(graph->optimization_mutex.try_lock()) {
-      ImGui::Text("Graph");
-      ImGui::Text("# vertices: %d", graph->num_vertices());
-      ImGui::Text("# edges: %d", graph->num_edges());
-      ImGui::Text("time: %.1f[msec]", graph->elapsed_time_msec);
-      ImGui::Text("chi2: %.3f -> %.3f", graph->chi2_before, graph->chi2_after);
-      ImGui::Text("iterations: %d", graph->iterations);
-      ImGui::Text("\nFPS: %.3f fps", ImGui::GetIO().Framerate);
       graph->optimization_mutex.unlock();
     } else {
-      optimizing = true;
-      ImGui::Text("%c %s", "|/-\\"[(int)(ImGui::GetTime() / 0.05f) & 3], "optimizing");
-      ImGui::Text("\nFPS: %.3f fps", ImGui::GetIO().Framerate);
+      ImGui::Begin("##optimization progress", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground);
+      ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "%c %s", "|/-\\"[(int)(ImGui::GetTime() / 0.05f) & 3], "optimizing");
+
+      std::string messages = graph->optimization_messages();
+      std::stringstream sst(messages);
+
+      float max_line_length = 0;
+      std::vector<std::string> lines;
+      while(!sst.eof()) {
+        std::string line;
+        std::getline(sst, line);
+
+        lines.push_back(line);
+        max_line_length = std::max(max_line_length, ImGui::CalcTextSize(line.c_str()).x);
+      }
+
+      ImGui::BeginChild("##messages", ImVec2(max_line_length + 30.0f, ImGui::GetFontSize() * 32), true, ImGuiWindowFlags_AlwaysAutoResize);
+      for(const auto& line: lines) {
+        ImGui::Text(line.c_str());
+      }
+      ImGui::SetScrollHere();
+      ImGui::EndChild();
+
+      ImGui::End();
     }
-    ImGui::End();
 
     main_canvas->draw_ui();
 
@@ -265,7 +282,7 @@ private:
       }
 
       if(ImGui::MenuItem("Optimize")) {
-        graph->optimize_background(1024);
+        graph->optimize_background(128);
       }
 
       ImGui::EndMenu();
@@ -595,7 +612,7 @@ private:
           if(ImGui::MenuItem("Ground(UnitZ, Zero)")) {
             graph->add_edge_prior_normal(picked_id, Eigen::Vector3d::UnitZ(), 1000.0);
             graph->add_edge_prior_distance(picked_id, 0.0, 1000.0);
-            graph->optimize_background(1024);
+            graph->optimize_background(128);
           }
 
           if(ImGui::MenuItem("Normal:UnitX")) {

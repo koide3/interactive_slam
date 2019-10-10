@@ -25,7 +25,7 @@ namespace guik {
  * @param data_directory
  * @param size
  */
-GLCanvas::GLCanvas(const std::string& data_directory, const Eigen::Vector2i& size) : size(size), point_scale(50.0f), min_z(-1.5f), max_z(5.0f), z_clipping(true) {
+GLCanvas::GLCanvas(const std::string& data_directory, const Eigen::Vector2i& size) : size(size), point_size(50.0f), min_z(-1.5f), max_z(5.0f), z_clipping(true) {
   frame_buffer.reset(new glk::FrameBuffer(size));
   frame_buffer->add_color_buffer(GL_RGBA32I, GL_RGBA_INTEGER, GL_INT);
 
@@ -96,7 +96,8 @@ void GLCanvas::bind(bool clear_buffers) {
   shader->set_uniform("z_range", Eigen::Vector2f(min_z, max_z));
 
   shader->set_uniform("color_mode", 0);
-  shader->set_uniform("point_scale", point_scale);
+  shader->set_uniform("point_scale", 1.0f);
+  shader->set_uniform("point_size", point_size);
 
   glEnable(GL_DEPTH_TEST);
 }
@@ -239,7 +240,7 @@ Eigen::Vector3f GLCanvas::unproject(const Eigen::Vector2i& p, float depth) const
 
 void GLCanvas::draw_ui() {
   ImGui::Begin("shader setting", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-  ImGui::DragFloat("point_scale", &point_scale, 10.0f);
+  ImGui::DragFloat("point_size", &point_size, 10.0f);
   ImGui::DragFloat("min_z", &min_z, 0.1f);
   ImGui::DragFloat("max_z", &max_z, 0.1f);
   ImGui::Checkbox("z_clipping", &z_clipping);
