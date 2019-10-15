@@ -10,7 +10,7 @@
 
 namespace hdl_graph_slam {
 
-RegistrationMethods::RegistrationMethods() : registration_method(1), registration_resolution(2.0f), registration_methods({"ICP", "GICP", "NDT", "GICP_OMP", "NDT_OMP"}) {}
+RegistrationMethods::RegistrationMethods() : registration_method(1), registration_resolution(2.0f), transformation_epsilon(1e-4), max_iterations(64), registration_methods({"ICP", "GICP", "NDT", "GICP_OMP", "NDT_OMP"}) {}
 
 RegistrationMethods::~RegistrationMethods() {}
 
@@ -20,6 +20,8 @@ void RegistrationMethods::draw_ui() {
   if(std::string(registration_methods[registration_method]).find("NDT") != std::string::npos) {
     ImGui::DragFloat("Resolution", &registration_resolution, 0.1f, 0.1f, 20.0f);
   }
+  ImGui::DragFloat("Transformation epsilon", &transformation_epsilon, 1e-5f, 1e-5f, 1e-2f, "%.6f");
+  ImGui::DragInt("Max iterations", &max_iterations, 1, 1, 256);
 }
 
 pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr RegistrationMethods::method() const {
@@ -56,6 +58,9 @@ pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr RegistrationMethods::meth
       registration = ndt;
     } break;
   }
+
+  registration->setTransformationEpsilon(transformation_epsilon);
+  registration->setMaximumIterations(max_iterations);
 
   return registration;
 }

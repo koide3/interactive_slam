@@ -19,6 +19,10 @@ public:
 private:
   int registration_method;
   float registration_resolution;
+
+  float transformation_epsilon;
+  int max_iterations;
+
   std::vector<const char*> registration_methods;
 };
 }  // namespace hdl_graph_slam
