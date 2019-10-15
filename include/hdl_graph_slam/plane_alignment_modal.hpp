@@ -5,6 +5,7 @@
 
 #include <imgui.h>
 #include <guik/gl_canvas.hpp>
+#include <hdl_graph_slam/robust_kernels.hpp>
 #include <hdl_graph_slam/view/vertex_plane_view.hpp>
 #include <hdl_graph_slam/view/interactive_graph_view.hpp>
 
@@ -37,8 +38,7 @@ private:
   int plane_mode;
   float information_scale;
 
-  int robust_kernel;
-  float robust_kernel_delta;
+  RobustKernels robust_kernel;
 };
 
 }  // namespace hdl_graph_slam

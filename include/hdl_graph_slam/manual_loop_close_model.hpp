@@ -7,6 +7,8 @@
 
 #include <imgui.h>
 #include <guik/gl_canvas.hpp>
+#include <hdl_graph_slam/robust_kernels.hpp>
+#include <hdl_graph_slam/registration_methods.hpp>
 #include <hdl_graph_slam/view/keyframe_view.hpp>
 #include <hdl_graph_slam/view/interactive_graph_view.hpp>
 
@@ -54,7 +56,7 @@ private:
   std::atomic_int auto_alignment_progress;
   std::future<std::shared_ptr<Eigen::Isometry3d>> auto_alignment_result;
 
-  int registration_method;
+  int global_registration_method;
 
   float fpfh_normal_estimation_radius;
   float fpfh_search_radius;
@@ -64,8 +66,9 @@ private:
   float fpfh_similarity_threshold;
   float fpfh_max_correspondence_distance;
   float fpfh_inlier_fraction;
-  int scan_matching_method;
-  float scan_matching_resolution;
+
+  RegistrationMethods registration_method;
+  RobustKernels robust_kernel;
 };
 }
 

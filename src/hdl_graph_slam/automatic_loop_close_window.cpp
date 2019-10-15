@@ -5,14 +5,12 @@
 #include <g2o/types/slam3d/edge_se3.h>
 #include <g2o/types/slam3d/vertex_se3.h>
 
-#include <pclomp/ndt_omp.h>
-#include <pcl/registration/gicp.h>
 #include <hdl_graph_slam/information_matrix_calculator.hpp>
 
 namespace hdl_graph_slam {
 
 AutomaticLoopCloseWindow::AutomaticLoopCloseWindow(std::shared_ptr<InteractiveGraphView>& graph)
-    : show_window(false), graph(graph), running(false), loop_detection_source(0), scan_matching_method(0), scan_matching_resolution(2.0f), fitness_score_thresh(0.3f), fitness_score_max_range(2.0f), search_method(1), distance_thresh(10.0f), accum_distance_thresh(15.0f), robust_kernel(1), robust_kernel_delta(0.01f), optimize(true) {}
+    : show_window(false), graph(graph), running(false), loop_detection_source(0), fitness_score_thresh(0.3f), fitness_score_max_range(2.0f), search_method(1), distance_thresh(10.0f), accum_distance_thresh(15.0f), optimize(true) {}
 
 AutomaticLoopCloseWindow::~AutomaticLoopCloseWindow() {
   if (running) {
@@ -32,12 +30,7 @@ void AutomaticLoopCloseWindow::draw_ui() {
 
   ImGui::Begin("automatic loop close", &show_window, ImGuiWindowFlags_AlwaysAutoResize);
 
-  ImGui::Text("Scan matching");
-  const char* methods[] = {"GICP", "NDT"};
-  ImGui::Combo("Method", &scan_matching_method, methods, IM_ARRAYSIZE(methods));
-  if(scan_matching_method == 1) {
-    ImGui::DragFloat("Resolution", &scan_matching_resolution, 0.1f, 0.1f, 20.0f);
-  }
+  registration_method.draw_ui();
   ImGui::DragFloat("Fitness score thresh", &fitness_score_thresh, 0.01f, 0.01f, 10.0f);
 
   ImGui::Text("Loop detection");
@@ -46,10 +39,7 @@ void AutomaticLoopCloseWindow::draw_ui() {
   ImGui::DragFloat("Distance thresh", &distance_thresh, 0.5f, 0.5f, 100.0f);
   ImGui::DragFloat("Accum distance thresh", &accum_distance_thresh, 0.5f, 0.5f, 100.0f);
 
-  ImGui::Text("Robust kernel");
-  const char* kernels[] = {"NONE", "Huber"};
-  ImGui::Combo("Kernel type", &robust_kernel, kernels, IM_ARRAYSIZE(kernels));
-  ImGui::DragFloat("Kernel delta", &robust_kernel_delta, 0.01f, 0.01f, 10.0f);
+  robust_kernel.draw_ui();
 
   ImGui::Checkbox("Optimization", &optimize);
 
@@ -77,20 +67,7 @@ void AutomaticLoopCloseWindow::draw_ui() {
 }
 
 void AutomaticLoopCloseWindow::loop_detection() {
-  pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr registration;
-  switch(scan_matching_method) {
-    case 0:
-    {
-      auto gicp = boost::make_shared<pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>>();
-      registration = gicp;
-    } break;
-    case 1:
-    {
-      auto ndt = boost::make_shared<pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>>();
-      ndt->setResolution(scan_matching_resolution);
-      registration = ndt;
-    } break;
-  }
+  pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr registration = registration_method.method();
 
   while (running) {
     KeyFrameView::Ptr source = graph->keyframes_view[loop_detection_source];
@@ -116,10 +93,8 @@ void AutomaticLoopCloseWindow::loop_detection() {
       double fitness_score = InformationMatrixCalculator::calc_fitness_score(source->lock()->cloud, candidates[i]->lock()->cloud, relative, fitness_score_max_range);
 
       if (fitness_score < fitness_score_thresh) {
-        const char* kernels[] = {"NONE", "Huber"};
-
         edge_inserted = true;
-        auto edge = graph->add_edge(source->lock(), candidates[i]->lock(), relative, kernels[robust_kernel], robust_kernel_delta);
+        auto edge = graph->add_edge(source->lock(), candidates[i]->lock(), relative, robust_kernel.type(), robust_kernel.delta());
       }
     }
 

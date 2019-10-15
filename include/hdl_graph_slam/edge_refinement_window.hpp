@@ -8,6 +8,8 @@
 #include <boost/optional.hpp>
 
 #include <imgui.h>
+#include <hdl_graph_slam/robust_kernels.hpp>
+#include <hdl_graph_slam/registration_methods.hpp>
 #include <hdl_graph_slam/view/keyframe_view.hpp>
 #include <hdl_graph_slam/view/interactive_graph_view.hpp>
 
@@ -74,11 +76,11 @@ private:
   std::vector<EdgeInfo> edges;
   g2o::EdgeSE3* inspected_edge;
 
-  int scan_matching_method;
-  float scan_matching_resolution;
+  RegistrationMethods registration_method;
+  RobustKernels robust_kernel;
 
-  int robust_kernel;
-  float robust_kernel_delta;
+  int optimization_cycle;
+  int optimization_count;
 };
 
 }  // namespace hdl_graph_slam

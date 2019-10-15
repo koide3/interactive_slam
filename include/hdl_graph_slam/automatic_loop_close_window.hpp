@@ -7,6 +7,8 @@
 #include <boost/optional.hpp>
 
 #include <imgui.h>
+#include <hdl_graph_slam/robust_kernels.hpp>
+#include <hdl_graph_slam/registration_methods.hpp>
 #include <hdl_graph_slam/view/keyframe_view.hpp>
 #include <hdl_graph_slam/view/interactive_graph_view.hpp>
 
@@ -46,8 +48,6 @@ private:
   KeyFrameView::Ptr loop_source;
   std::vector<KeyFrameView::Ptr> loop_candidates;
 
-  int scan_matching_method;
-  float scan_matching_resolution;
   float fitness_score_thresh;
   float fitness_score_max_range;
 
@@ -55,8 +55,8 @@ private:
   float distance_thresh;
   float accum_distance_thresh;
 
-  int robust_kernel;
-  float robust_kernel_delta;
+  RegistrationMethods registration_method;
+  RobustKernels robust_kernel;
 
   bool optimize;
 };

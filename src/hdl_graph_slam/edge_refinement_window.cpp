@@ -4,9 +4,6 @@
 #include <g2o/types/slam3d/edge_se3.h>
 #include <glk/primitives/primitives.hpp>
 
-#include <pclomp/ndt_omp.h>
-#include <pcl/registration/gicp.h>
-
 #include <hdl_graph_slam/information_matrix_calculator.hpp>
 
 namespace hdl_graph_slam {
@@ -25,8 +22,7 @@ double EdgeInfo::error() const {
   return (edge->information() * edge->error()).array().abs().sum();
 }
 
-EdgeRefinementWindow::EdgeRefinementWindow(std::shared_ptr<InteractiveGraphView>& graph)
-    : show_window(false), graph(graph), running(false), inspected_edge(nullptr), scan_matching_method(0), scan_matching_resolution(2.0f), robust_kernel(1), robust_kernel_delta(0.01f) {}
+EdgeRefinementWindow::EdgeRefinementWindow(std::shared_ptr<InteractiveGraphView>& graph) : show_window(false), graph(graph), running(false), inspected_edge(nullptr), optimization_cycle(10), optimization_count(0) {}
 
 EdgeRefinementWindow::~EdgeRefinementWindow() {
   running = false;
@@ -43,21 +39,16 @@ void EdgeRefinementWindow::draw_ui() {
 
   ImGui::Begin("edge refinement", &show_window, ImGuiWindowFlags_AlwaysAutoResize);
 
-  ImGui::Text("Scan matching");
-  const char* methods[] = {"GICP", "NDT"};
-  ImGui::Combo("Method", &scan_matching_method, methods, IM_ARRAYSIZE(methods));
-  if(scan_matching_method == 1) {
-    ImGui::DragFloat("Resolution", &scan_matching_resolution, 0.1f, 0.1f, 20.0f);
-  }
-
-  ImGui::Text("Robust kernel");
-  const char* kernels[] = {"NONE", "Huber"};
-  ImGui::Combo("Kernel type", &robust_kernel, kernels, IM_ARRAYSIZE(kernels));
-  ImGui::DragFloat("Kernel delta", &robust_kernel_delta, 0.01f, 0.01f, 10.0f);
+  registration_method.draw_ui();
+  robust_kernel.draw_ui();
 
   if(ImGui::Button("Apply to all SE3 edges")) {
     apply_robust_kernel();
   }
+
+  std::stringstream format;
+  format << (optimization_count % optimization_cycle) << "/%d";
+  ImGui::DragInt("Optimization cycle", &optimization_cycle, 1, 1, 1024, format.str().c_str());
 
   if(ImGui::Button("Start")) {
     if(!running) {
@@ -118,8 +109,7 @@ void EdgeRefinementWindow::apply_robust_kernel() {
   }
 
   for(const auto& edge : edges) {
-    const char* kernels[] = {"NONE", "Huber"};
-    graph->apply_robust_kernel(edge.edge, kernels[robust_kernel], robust_kernel_delta);
+    graph->apply_robust_kernel(edge.edge, robust_kernel.type(), robust_kernel.delta());
   }
   graph->optimize();
 }
@@ -147,23 +137,11 @@ void EdgeRefinementWindow::refinement() {
     return;
   }
 
-  double fitness_score_before = InformationMatrixCalculator::calc_fitness_score(v1->second->cloud, v2->second->cloud, edge.edge->measurement(), 2.0f);
+  double fitness_score_before = InformationMatrixCalculator::calc_fitness_score(v1->second->cloud, v2->second->cloud, edge.edge->measurement());
 
-  pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr registration;
-  switch(scan_matching_method) {
-    case 0: {
-      auto gicp = boost::make_shared<pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>>();
-      registration = gicp;
-    } break;
-    case 1: {
-      auto ndt = boost::make_shared<pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>>();
-      ndt->setResolution(scan_matching_resolution);
-      registration = ndt;
-    } break;
-  }
+  pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr registration = registration_method.method();
 
   Eigen::Isometry3d relative = v1->second->estimate().inverse() * v2->second->estimate();
-  double fitness_score_before2 = InformationMatrixCalculator::calc_fitness_score(v1->second->cloud, v2->second->cloud, relative, 2.0f);
 
   registration->setInputTarget(v1->second->cloud);
   registration->setInputSource(v2->second->cloud);
@@ -172,12 +150,16 @@ void EdgeRefinementWindow::refinement() {
   registration->align(*aligned, relative.matrix().cast<float>());
 
   relative.matrix() = registration->getFinalTransformation().cast<double>();
-  double fitness_score_after = InformationMatrixCalculator::calc_fitness_score(v1->second->cloud, v2->second->cloud, relative, 2.0f);
+  double fitness_score_after = InformationMatrixCalculator::calc_fitness_score(v1->second->cloud, v2->second->cloud, relative);
 
   if(fitness_score_after < fitness_score_before) {
     std::lock_guard<std::mutex> lock(graph->optimization_mutex);
     edge.edge->setMeasurement(relative);
-    graph->optimize();
+    graph->apply_robust_kernel(edge.edge, robust_kernel.type(), robust_kernel.delta());
+
+    if(((++optimization_count) % optimization_cycle) == 0) {
+      graph->optimize();
+    }
   }
 
   {

@@ -4,7 +4,7 @@
 
 namespace hdl_graph_slam {
 
-PlaneAlignmentModal::PlaneAlignmentModal(std::shared_ptr<InteractiveGraphView>& graph) : graph(graph), plane_mode(1), information_scale(100.0f), robust_kernel(0), robust_kernel_delta(0.01) {}
+PlaneAlignmentModal::PlaneAlignmentModal(std::shared_ptr<InteractiveGraphView>& graph) : graph(graph), plane_mode(1), information_scale(100.0f), robust_kernel(0, 0.01) {}
 PlaneAlignmentModal::~PlaneAlignmentModal() {}
 
 bool PlaneAlignmentModal::set_begin_plane(int plane_id) {
@@ -54,18 +54,15 @@ bool PlaneAlignmentModal::run() {
     ImGui::Combo("Plane mode", &plane_mode, plane_modes, IM_ARRAYSIZE(plane_modes));
     ImGui::DragFloat("Information scale", &information_scale, 1.0f, 0.01f, 10000.0f, "%.3f", 1.0f);
 
-    ImGui::Text("Robust kernel");
-    const char* kernels[] = {"NONE", "Huber"};
-    ImGui::Combo("Kernel type", &robust_kernel, kernels, IM_ARRAYSIZE(kernels));
-    ImGui::DragFloat("Kernel delta", &robust_kernel_delta, 0.01f, 0.01f, 10.0f);
+    robust_kernel.draw_ui();
 
     if (ImGui::Button("Add Edge")) {
       switch (plane_mode) {
         case 1:
-          graph->add_edge_parallel(plane_begin->vertex_plane, plane_end->vertex_plane, information_scale, kernels[robust_kernel], robust_kernel_delta);
+          graph->add_edge_parallel(plane_begin->vertex_plane, plane_end->vertex_plane, information_scale, robust_kernel.type(), robust_kernel.delta());
           break;
         case 2:
-          graph->add_edge_perpendicular(plane_begin->vertex_plane, plane_end->vertex_plane, information_scale, kernels[robust_kernel], robust_kernel_delta);
+          graph->add_edge_perpendicular(plane_begin->vertex_plane, plane_end->vertex_plane, information_scale, robust_kernel.type(), robust_kernel.delta());
           break;
       }
       graph->optimize();

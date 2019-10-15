@@ -97,6 +97,7 @@ target_link_libraries(odometry2graph
 
 add_executable(interactive_slam
   src/interactive_slam.cpp
+  src/hdl_graph_slam/registration_methods.cpp
   src/hdl_graph_slam/interactive_graph.cpp
   src/hdl_graph_slam/interactive_keyframe.cpp
   src/hdl_graph_slam/version_modal.cpp

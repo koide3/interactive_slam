@@ -4,6 +4,7 @@
 #include <g2o/core/factory.h>
 #include <g2o/core/robust_kernel_impl.h>
 #include <g2o/types/slam3d/edge_se3.h>
+#include <g2o/robust_kernel_io.hpp>
 
 #include <hdl_graph_slam/view/line_buffer.hpp>
 #include <hdl_graph_slam/view/edge_se3_view.hpp>
@@ -52,9 +53,9 @@ void EdgeView::context_menu() {
   if(robust_kernel == nullptr) {
     ImGui::Text("Robust kernel:NONE");
   } else {
-    std::string robust_kernel_type = "UNKNOWN";
-    if(dynamic_cast<g2o::RobustKernelHuber*>(robust_kernel)) {
-      robust_kernel_type = "Huber";
+    std::string robust_kernel_type = g2o::kernel_type(robust_kernel);
+    if(robust_kernel_type.empty()) {
+      robust_kernel_type = "UNKNOWN";
     }
 
     ImGui::Text("\nRobust kernel");

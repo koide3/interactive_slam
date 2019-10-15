@@ -1,10 +1,5 @@
 #include <hdl_graph_slam/manual_loop_close_model.hpp>
 
-#include <pclomp/ndt_omp.h>
-#include <pclomp/gicp_omp.h>
-#include <pcl/registration/ndt.h>
-#include <pcl/registration/icp.h>
-#include <pcl/registration/gicp.h>
 #include <pcl/registration/sample_consensus_prerejective.h>
 
 #include <pcl/features/fpfh_omp.h>
@@ -17,7 +12,7 @@ namespace hdl_graph_slam {
 ManualLoopCloseModal::ManualLoopCloseModal(std::shared_ptr<InteractiveGraphView>& graph, const std::string& data_directory)
     : graph(graph),
       fitness_score(0),
-      registration_method(0),
+      global_registration_method(0),
       fpfh_normal_estimation_radius(0.25f),
       fpfh_search_radius(0.5f),
       fpfh_max_iterations(20000),
@@ -25,9 +20,8 @@ ManualLoopCloseModal::ManualLoopCloseModal(std::shared_ptr<InteractiveGraphView>
       fpfh_correspondence_randomness(5),
       fpfh_similarity_threshold(0.85f),
       fpfh_max_correspondence_distance(0.30f),
-      fpfh_inlier_fraction(0.25f),
-      scan_matching_method(0),
-      scan_matching_resolution(2.0) {
+      fpfh_inlier_fraction(0.25f)
+{
   canvas.reset(new guik::GLCanvas(data_directory, Eigen::Vector2i(512, 512)));
 }
 
@@ -153,7 +147,7 @@ bool ManualLoopCloseModal::run() {
 
       if (ImGui::Button("Add edge")) {
         Eigen::Isometry3d relative = begin_keyframe_pose.inverse() * end_keyframe_pose;
-        graph->add_edge(begin_keyframe->lock(), end_keyframe->lock(), relative);
+        graph->add_edge(begin_keyframe->lock(), end_keyframe->lock(), relative, robust_kernel.type(), robust_kernel.delta());
         graph->optimize();
 
         ImGui::CloseCurrentPopup();
@@ -181,10 +175,10 @@ void ManualLoopCloseModal::update_fitness_score() { fitness_score = InformationM
 void ManualLoopCloseModal::auto_align() {
   if (ImGui::BeginPopupModal("auto align", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
     const char* items[] = {"FPFH"};
-    ImGui::Combo("Method", &registration_method, items, IM_ARRAYSIZE(items));
+    ImGui::Combo("Method", &global_registration_method, items, IM_ARRAYSIZE(items));
 
     // FPFH
-    if (registration_method == 0) {
+    if(global_registration_method == 0) {
       ImGui::DragFloat("Normal estimation radius", &fpfh_normal_estimation_radius, 0.01f, 0.01f, 5.0f);
       ImGui::DragFloat("Search radius", &fpfh_search_radius, 0.01f, 0.01f, 5.0f);
       ImGui::DragInt("Max iterations", &fpfh_max_iterations, 1000, 1000, 100000);
@@ -288,25 +282,11 @@ void ManualLoopCloseModal::auto_align() {
 
 void ManualLoopCloseModal::scan_matching() {
   if (ImGui::BeginPopupModal("scan matching", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-    const char* items[] = {"NDT", "GICP", "ICP"};
-    ImGui::Combo("Method", &scan_matching_method, items, IM_ARRAYSIZE(items));
-    ImGui::DragFloat("Resolution", &scan_matching_resolution, 0.1, 0.1f, 15.0f);
+    registration_method.draw_ui();
+    robust_kernel.draw_ui();
 
     if (ImGui::Button("OK")) {
-      pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr registration;
-      switch (scan_matching_method) {
-        case 0: {
-          auto ndt = boost::make_shared<pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>>();
-          ndt->setResolution(scan_matching_resolution);
-          registration = ndt;
-        } break;
-        case 1:
-          registration = boost::make_shared<pclomp::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>>();
-          break;
-        case 2:
-          registration = boost::make_shared<pcl::IterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>>();
-          break;
-      }
+      pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr registration = registration_method.method();
 
       registration->setInputTarget(begin_keyframe->lock()->cloud);
       registration->setInputSource(end_keyframe->lock()->cloud);

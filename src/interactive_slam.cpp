@@ -57,8 +57,12 @@ public:
     automatic_loop_close_window.reset(new AutomaticLoopCloseWindow(graph));
     edge_refinement_window.reset(new EdgeRefinementWindow(graph));
 
+    alpha = 1.0f;
+
     return true;
   }
+
+  float alpha;
 
   /**
    * @brief draw ImGui-based UI
