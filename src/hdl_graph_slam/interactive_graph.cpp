@@ -10,6 +10,7 @@
 #include <g2o/types/slam3d_addons/vertex_plane.h>
 #include <g2o/edge_se3_plane.hpp>
 #include <g2o/edge_plane_prior.hpp>
+#include <g2o/edge_plane_identity.hpp>
 #include <g2o/edge_plane_parallel.hpp>
 
 #include <pcl/io/pcd_io.h>
@@ -193,6 +194,14 @@ g2o::EdgeSE3Plane* InteractiveGraph::add_edge(const KeyFrame::Ptr& v_se3, g2o::V
 
 void InteractiveGraph::apply_robust_kernel(g2o::HyperGraph::Edge* edge, const std::string& robust_kernel, double robust_kernel_delta) {
   add_robust_kernel(edge, robust_kernel, robust_kernel_delta);
+}
+
+void InteractiveGraph::add_edge_identity(g2o::VertexPlane* v1, g2o::VertexPlane* v2, double information_scale, const std::string& robust_kernel, double robust_kernel_delta) {
+  auto edge = add_plane_identity_edge(v1, v2, Eigen::Vector4d::Zero(), Eigen::Matrix4d::Identity() * information_scale);
+  if(robust_kernel != "NONE") {
+    add_robust_kernel(edge, robust_kernel, robust_kernel_delta);
+  }
+  edge->setId(edge_id_gen++);
 }
 
 void InteractiveGraph::add_edge_parallel(g2o::VertexPlane* v1, g2o::VertexPlane* v2, double information_scale, const std::string& robust_kernel, double robust_kernel_delta) {

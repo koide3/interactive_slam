@@ -58,6 +58,9 @@ bool PlaneAlignmentModal::run() {
 
     if (ImGui::Button("Add Edge")) {
       switch (plane_mode) {
+        case 0:
+          graph->add_edge_identity(plane_begin->vertex_plane, plane_end->vertex_plane, information_scale, robust_kernel.type(), robust_kernel.delta());
+          break;
         case 1:
           graph->add_edge_parallel(plane_begin->vertex_plane, plane_end->vertex_plane, information_scale, robust_kernel.type(), robust_kernel.delta());
           break;

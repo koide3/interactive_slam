@@ -1,6 +1,7 @@
 #ifndef EDGE_PLANE_VIEW_HPP
 #define EDGE_PLANE_VIEW_HPP
 
+#include <g2o/edge_plane_identity.hpp>
 #include <g2o/edge_plane_parallel.hpp>
 #include <g2o/types/slam3d_addons/edge_plane.h>
 
@@ -59,7 +60,7 @@ public:
   }
 
   static bool is_plane_edge(g2o::HyperGraph::Edge* edge) {
-    return dynamic_cast<g2o::EdgePlane*>(edge) || dynamic_cast<g2o::EdgePlaneParallel*>(edge) || dynamic_cast<g2o::EdgePlanePerpendicular*>(edge);
+    return dynamic_cast<g2o::EdgePlane*>(edge) || dynamic_cast<g2o::EdgePlaneIdentity*>(edge) || dynamic_cast<g2o::EdgePlaneParallel*>(edge) || dynamic_cast<g2o::EdgePlanePerpendicular*>(edge);
   }
 
 private:
