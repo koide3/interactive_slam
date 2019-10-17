@@ -1,0 +1,14 @@
+sudo: required
+language: generic
+dist: bionic
+
+services:
+  - docker
+
+matrix:
+  include:
+    - name: "Bionic melodic"
+      env: ROS_DISTRO=melodic
+
+script:
+  - docker build -f ./docker/$ROS_DISTRO/Dockerfile .
