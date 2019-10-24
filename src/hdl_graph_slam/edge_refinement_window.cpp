@@ -137,7 +137,7 @@ void EdgeRefinementWindow::refinement() {
     return;
   }
 
-  double fitness_score_before = InformationMatrixCalculator::calc_fitness_score(v1->second->cloud, v2->second->cloud, edge.edge->measurement());
+  double fitness_score_before = InformationMatrixCalculator::calc_fitness_score(v1->second->cloud, v2->second->cloud, edge.edge->measurement(), 2.0);
 
   pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr registration = registration_method.method();
 
@@ -150,7 +150,7 @@ void EdgeRefinementWindow::refinement() {
   registration->align(*aligned, relative.matrix().cast<float>());
 
   relative.matrix() = registration->getFinalTransformation().cast<double>();
-  double fitness_score_after = InformationMatrixCalculator::calc_fitness_score(v1->second->cloud, v2->second->cloud, relative);
+  double fitness_score_after = InformationMatrixCalculator::calc_fitness_score(v1->second->cloud, v2->second->cloud, relative, 2.0);
 
   if(fitness_score_after < fitness_score_before) {
     std::lock_guard<std::mutex> lock(graph->optimization_mutex);
