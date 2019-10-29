@@ -78,6 +78,7 @@ bool ManualLoopCloseModal::run() {
       ImGui::Image((void*)canvas->frame_buffer->color().id(), ImVec2(512, 512), ImVec2(0, 1), ImVec2(1, 0));
       ImGui::EndChild();
 
+      ImGui::PushItemWidth(400);
       ImGui::Text("fitness_score:%.4f", fitness_score);
 
       if (ImGui::Button("Auto align")) {
@@ -170,7 +171,10 @@ bool ManualLoopCloseModal::run() {
   return close_window;
 }
 
-void ManualLoopCloseModal::update_fitness_score() { fitness_score = InformationMatrixCalculator::calc_fitness_score(begin_keyframe->lock()->cloud, end_keyframe->lock()->cloud, begin_keyframe_pose.inverse() * end_keyframe_pose, 1.0); }
+void ManualLoopCloseModal::update_fitness_score() {
+  fitness_score = InformationMatrixCalculator::calc_fitness_score(begin_keyframe->lock()->cloud, end_keyframe->lock()->cloud, begin_keyframe_pose.inverse() * end_keyframe_pose, 1.0);
+  fitness_score = std::min(1000000.0, fitness_score);
+}
 
 void ManualLoopCloseModal::auto_align() {
   if (ImGui::BeginPopupModal("auto align", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {

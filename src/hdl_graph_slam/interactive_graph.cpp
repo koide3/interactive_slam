@@ -23,7 +23,7 @@
 
 namespace hdl_graph_slam {
 
-InteractiveGraph::InteractiveGraph() : GraphSLAM("gn_var_cholmod"), iterations(0), chi2_before(0.0), chi2_after(0.0), elapsed_time_msec(0.0) {
+InteractiveGraph::InteractiveGraph() : GraphSLAM("lm_var_cholmod"), iterations(0), chi2_before(0.0), chi2_after(0.0), elapsed_time_msec(0.0) {
   inf_calclator.reset(new InformationMatrixCalculator());
   inf_calclator->load(params);
   edge_id_gen = 0;
@@ -271,7 +271,7 @@ void InteractiveGraph::optimize(int num_iterations) {
   auto t1 = std::chrono::high_resolution_clock::now();
 
   if(num_iterations < 0) {
-    num_iterations = params.param<int>("g2o_solver_num_iterations", 10);
+    num_iterations = params.param<int>("g2o_solver_num_iterations", 64);
   }
 
   chi2_before = graph->chi2();
@@ -302,7 +302,7 @@ void InteractiveGraph::optimize_background(int num_iterations) {
 
     int max_iterations = num_iterations;
     if(num_iterations < 0) {
-      max_iterations = params.param<int>("g2o_solver_num_iterations", 10);
+      max_iterations = params.param<int>("g2o_solver_num_iterations", 64);
     }
 
     chi2_before = graph->chi2();
