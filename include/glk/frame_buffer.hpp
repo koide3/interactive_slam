@@ -9,6 +9,10 @@
 
 namespace glk {
 
+/**
+ * @brief OpenGL FrameBuffer wrapper class
+ *
+ */
 class FrameBuffer {
 public:
   FrameBuffer(const Eigen::Vector2i& size);

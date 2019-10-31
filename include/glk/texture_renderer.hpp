@@ -6,6 +6,10 @@
 
 namespace glk {
 
+/**
+ * @brief TextureRenderer
+ *
+ */
 class TextureRenderer {
 public:
   TextureRenderer(const std::string& data_directory) {

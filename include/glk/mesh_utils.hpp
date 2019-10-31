@@ -7,6 +7,10 @@
 
 namespace glk {
 
+/**
+ * @brief A class to make a mesh to be flat (so-called flat shading)
+ *
+ */
 class Flatize {
 public:
   Flatize(const std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>& vertices_, const std::vector<int>& indices_) {
@@ -34,6 +38,10 @@ public:
   std::vector<int> indices;
 };
 
+/**
+ * @brief A class to estimate normals of vertices
+ *
+ */
 class NormalEstimater {
 public:
   NormalEstimater(const std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>& vertices, const std::vector<int>& indices) {

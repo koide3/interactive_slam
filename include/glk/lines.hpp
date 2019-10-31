@@ -11,6 +11,10 @@
 
 namespace glk {
 
+/**
+ * @brief A class to draw a set of lines
+ *
+ */
 class Lines : public Drawable {
 public:
   Lines(float line_width, const std::vector<Eigen::Vector3f, Eigen::aligned_allocator<Eigen::Vector3f>>& vertices,

@@ -7,6 +7,10 @@
 
 namespace glk {
 
+/**
+ * @brief OpenGL texture wrapper
+ *
+ */
 class Texture {
 public:
   Texture(const Eigen::Vector2i& size, GLuint internal_format, GLuint format, GLuint type) : width(size[0]), height(size[1]) {
