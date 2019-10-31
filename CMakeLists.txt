@@ -1,6 +1,21 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(interactive_slam)
 
+set (IS_VERSION_MAJOR 1)
+set (IS_VERSION_MINOR 0)
+set (IS_VERSION_REVISION 0)
+
+execute_process (COMMAND git rev-parse --short HEAD WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR} OUTPUT_VARIABLE GIT_LAST_COMMIT_HASH OUTPUT_STRIP_TRAILING_WHITESPACE)
+execute_process (COMMAND git log -1 --format=%cd WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR} OUTPUT_VARIABLE GIT_LAST_COMMIT_DATE OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+set (LAST_COMMIT_HASH \"${GIT_LAST_COMMIT_HASH}\")
+set (LAST_COMMIT_DATE \"${GIT_LAST_COMMIT_DATE}\")
+
+configure_file (
+  "${PROJECT_SOURCE_DIR}/include/hdl_graph_slam/version.h.in"
+  "${PROJECT_SOURCE_DIR}/include/hdl_graph_slam/version.h"
+)
+
 # add_compile_options(-std=c++11)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
