@@ -33,7 +33,7 @@ void fb_size_callback(GLFWwindow* window, int width, int height) {
   appmap[window]->framebuffer_size_callback(Eigen::Vector2i(width, height));
 }
 
-bool Application::init(const Eigen::Vector2i& size, const char* glsl_version) {
+bool Application::init(const char* window_name, const Eigen::Vector2i& size, const char* glsl_version) {
   glfwSetErrorCallback([](int err, const char* desc) { std::cerr << "glfw error " << err << ": " << desc << std::endl; });
   if(!glfwInit()) {
     std::cerr << "failed to initialize GLFW" << std::endl;
@@ -43,7 +43,7 @@ bool Application::init(const Eigen::Vector2i& size, const char* glsl_version) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-  window = glfwCreateWindow(size[0], size[1], "screen", nullptr, nullptr);
+  window = glfwCreateWindow(size[0], size[1], window_name, nullptr, nullptr);
   if(window == nullptr) {
     return false;
   }
