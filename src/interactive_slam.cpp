@@ -27,6 +27,14 @@ public:
   InteractiveSLAMApplication() : Application() {}
   ~InteractiveSLAMApplication() {}
 
+  /**
+   * @brief initialize the application
+   * @param window_name
+   * @param size
+   * @param glsl_version
+   * @return true
+   * @return false
+   */
   bool init(const char* window_name, const Eigen::Vector2i& size, const char* glsl_version = "#version 330") override {
     if(!Application::init(window_name, size, glsl_version)) {
       return false;
@@ -38,6 +46,7 @@ public:
     right_clicked_pos.setZero();
     progress.reset(new guik::ProgressModal("progress modal"));
 
+    // initialize the main OpenGL canvas
     std::string package_path = ros::package::getPath("interactive_slam");
     std::string data_directory = package_path + "/data";
 
@@ -46,9 +55,11 @@ public:
       close();
     }
 
+    // initialize the pose graph
     graph.reset(new InteractiveGraphView());
     graph->init_gl();
 
+    // initialize sub-windows and modals
     version_modal.reset(new VersionModal());
     graph_edit_window.reset(new GraphEditWindow(graph));
     plane_detection_window.reset(new PlaneDetectionWindow(graph));
@@ -57,24 +68,23 @@ public:
     automatic_loop_close_window.reset(new AutomaticLoopCloseWindow(graph));
     edge_refinement_window.reset(new EdgeRefinementWindow(graph));
 
-    alpha = 1.0f;
-
     return true;
   }
-
-  float alpha;
 
   /**
    * @brief draw ImGui-based UI
    *
    */
   virtual void draw_ui() override {
+    // draw main menu bar
     main_menu();
 
+    // just for debug and development
     if(show_imgui_demo) {
       ImGui::ShowDemoWindow(&show_imgui_demo);
     }
 
+    // show basic graph statistics and FPS
     ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoBackground;
     ImGui::Begin("##stats", nullptr, flags);
     std::string graph_stats = graph->graph_statistics();
@@ -82,6 +92,7 @@ public:
     ImGui::Text("\nFPS: %.3f fps", ImGui::GetIO().Framerate);
     ImGui::End();
 
+    // show graph optimization progress
     if(graph->optimization_mutex.try_lock()) {
       graph->optimization_mutex.unlock();
     } else {
@@ -91,6 +102,7 @@ public:
       std::string messages = graph->optimization_messages();
       std::stringstream sst(messages);
 
+      // calculate the window width
       float max_line_length = 0;
       std::vector<std::string> lines;
       while(!sst.eof()) {
@@ -101,6 +113,7 @@ public:
         max_line_length = std::max(max_line_length, ImGui::CalcTextSize(line.c_str()).x);
       }
 
+      // optimization progress messages
       ImGui::BeginChild("##messages", ImVec2(max_line_length + 30.0f, ImGui::GetFontSize() * 32), true, ImGuiWindowFlags_AlwaysAutoResize);
       for(const auto& line: lines) {
         ImGui::Text(line.c_str());
@@ -111,8 +124,8 @@ public:
       ImGui::End();
     }
 
+    // draw windows
     main_canvas->draw_ui();
-
     graph_edit_window->draw_ui();
     plane_detection_window->draw_ui();
     automatic_loop_close_window->draw_ui();
@@ -124,7 +137,7 @@ public:
   }
 
   /**
-   * @brief draw OpenGL related things
+   * @brief draw OpenGL related stuffs on the main canvas
    *
    */
   virtual void draw_gl() override {
@@ -132,33 +145,38 @@ public:
       glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
 
       main_canvas->bind();
+
+      // draw coordinate system
       main_canvas->shader->set_uniform("color_mode", 2);
       main_canvas->shader->set_uniform("model_matrix", (Eigen::UniformScaling<float>(3.0f) * Eigen::Isometry3f::Identity()).matrix());
-
       const auto& coord = glk::Primitives::instance()->primitive(glk::Primitives::COORDINATE_SYSTEM);
       coord.draw(*main_canvas->shader);
 
+      // draw grid
       main_canvas->shader->set_uniform("color_mode", 1);
       main_canvas->shader->set_uniform("model_matrix", (Eigen::Translation3f(Eigen::Vector3f::UnitZ() * -0.02) * Eigen::Isometry3f::Identity()).matrix());
       main_canvas->shader->set_uniform("material_color", Eigen::Vector4f(0.8f, 0.8f, 0.8f, 1.0f));
-
       const auto& grid = glk::Primitives::instance()->primitive(glk::Primitives::GRID);
       grid.draw(*main_canvas->shader);
 
+      // draw pose graph
       graph->draw(draw_flags, *main_canvas->shader);
 
+      // let the windows draw something on the main canvas
       plane_detection_window->draw_gl(*main_canvas->shader);
       plane_alignment_modal->draw_gl(*main_canvas->shader);
       manual_loop_close_modal->draw_gl(*main_canvas->shader);
       automatic_loop_close_window->draw_gl(*main_canvas->shader);
       edge_refinement_window->draw_gl(*main_canvas->shader);
 
+      // flush to the screen
       main_canvas->unbind();
       main_canvas->render_to_screen();
 
       glDisable(GL_VERTEX_PROGRAM_POINT_SIZE);
       graph->optimization_mutex.unlock();
     } else {
+      // in case the optimization is going, show the last rendered image
       main_canvas->render_to_screen();
     }
   }
@@ -174,7 +192,7 @@ public:
 
 private:
   /**
-   * @brief show draw config settings
+   * @brief show rendering setting switches
    *
    */
   void draw_flags_config() {
@@ -213,6 +231,9 @@ private:
   void main_menu() {
     ImGui::BeginMainMenuBar();
 
+    /*** File menu ***/
+    // flags to open dialogs
+    // this trick is necessary to open ImGUI popup modals from the menubar
     bool open_map_dialog = false;
     bool merge_map_dialog = false;
     bool save_map_dialog = false;
@@ -248,11 +269,14 @@ private:
 
       ImGui::EndMenu();
     }
+
+    // open dialogs
     open_map_data(open_map_dialog);
     merge_map_data(merge_map_dialog);
     save_map_data(save_map_dialog);
     export_pointcloud(export_map_dialog);
 
+    /*** View menu ***/
     if(ImGui::BeginMenu("View")) {
       if(ImGui::MenuItem("Reset camera")) {
         main_canvas->reset_camera();
@@ -270,6 +294,7 @@ private:
       ImGui::EndMenu();
     }
 
+    /*** Graph menu ***/
     if(ImGui::BeginMenu("Graph")) {
       if(ImGui::MenuItem("Graph editor")) {
         graph_edit_window->show();
@@ -292,6 +317,7 @@ private:
       ImGui::EndMenu();
     }
 
+    /*** Help menu ***/
     bool show_version = false;
     if(ImGui::BeginMenu("Help")) {
       if(ImGui::MenuItem("ImGuiDemo")) {
@@ -314,6 +340,9 @@ private:
   }
 
 private:
+  /**
+   * @brief make sure that all the windows and modals are closed (to avoid confliction of optimization threads)
+   */
   void clear_selections() {
     manual_loop_close_modal->close();
     automatic_loop_close_window->close();
@@ -327,6 +356,7 @@ private:
    * @param open_dialog
    */
   void open_map_data(bool open_dialog) {
+    // show the progress modal until loading will be finished
     if(progress->run("graph load")) {
       auto result = progress->result<std::shared_ptr<InteractiveGraphView>>();
       if(result == nullptr) {
@@ -337,8 +367,8 @@ private:
         return;
       }
 
+      // initialize OpenGL stuffs in this main thread
       result->init_gl();
-
       graph = result;
     }
 
@@ -369,6 +399,7 @@ private:
 
     std::string input_graph_filename = result;
 
+    // open the progress modal and load the graph in a background thread
     progress->open<std::shared_ptr<InteractiveGraphView>>("graph load", [=](guik::ProgressInterface& p) {
       std::shared_ptr<InteractiveGraphView> graph(new InteractiveGraphView());
       if(!graph->load_map_data(input_graph_filename, p)) {
@@ -383,6 +414,7 @@ private:
    * @param open_dialog
    */
   void merge_map_data(bool open_dialog) {
+    // show the progress modal
     if(progress->run("graph merge")) {
       auto result = progress->result<InteractiveGraph*>();
       if(result == nullptr) {
@@ -393,6 +425,7 @@ private:
         return;
       }
 
+      // TODO: automatic multiple map alignment
       Eigen::Isometry3d relative = Eigen::Isometry3d::Identity();
       relative.translation() = Eigen::Vector3d(0.0, 10.0, 0.0);
       graph->merge_map_data(*result, graph->keyframes[0], result->keyframes[0], relative);
@@ -527,13 +560,15 @@ private:
   }
 
   /**
-   * @brief mouse input handler
+   * @brief handling mouse input
    */
   void mouse_control() {
     ImGuiIO& io = ImGui::GetIO();
     if(!io.WantCaptureMouse) {
+      // let the main canvas handle the mouse input
       main_canvas->mouse_control();
 
+      // remember the right click position
       if(ImGui::IsMouseClicked(1)) {
         auto mouse_pos = ImGui::GetMousePos();
         right_clicked_pos = Eigen::Vector2i(mouse_pos.x, mouse_pos.y);
@@ -546,14 +581,16 @@ private:
    */
   void context_menu() {
     if(ImGui::BeginPopupContextVoid("context menu")) {
-      auto mouse_pos = ImGui::GetMousePos();
+      // pickup information of the right clicked object
       Eigen::Vector4i picked_info = main_canvas->pick_info(right_clicked_pos);
-      int picked_type = picked_info[0];
-      int picked_id = picked_info[1];
+      int picked_type = picked_info[0];   // object type (point, vertex, edge, etc...)
+      int picked_id = picked_info[1];     // object ID
 
+      // calculate the 3D position of the right clicked pixel
       float depth = main_canvas->pick_depth(right_clicked_pos);
       Eigen::Vector3f pos_3d = main_canvas->unproject(right_clicked_pos, depth);
 
+      // map point
       if(picked_type & DrawableObject::POINTS) {
         ImGui::Text("Map point");
         ImGui::Text("Pos: %.3f %.3f %.3f", pos_3d[0], pos_3d[1], pos_3d[2]);
@@ -566,6 +603,7 @@ private:
         }
       }
 
+      // vertex object
       if(picked_type & DrawableObject::VERTEX) {
         ImGui::Text("Vertex %d", picked_id);
         ImGui::Text("Pos: %.3f %.3f %.3f", pos_3d[0], pos_3d[1], pos_3d[2]);
@@ -576,6 +614,7 @@ private:
         }
       }
 
+      // edge object
       if(picked_type & DrawableObject::EDGE) {
         ImGui::Text("Edge %d", picked_id);
         ImGui::Text("Pos: %.3f %.3f %.3f", pos_3d[0], pos_3d[1], pos_3d[2]);
@@ -587,6 +626,7 @@ private:
         }
       }
 
+      // keyframe object
       if(picked_type & DrawableObject::KEYFRAME) {
         ImGui::Text("\nKeyframe");
         if(ImGui::Button("Loop begin")) {
@@ -600,6 +640,7 @@ private:
         }
       }
 
+      // plane vertex
       if(picked_type & DrawableObject::PLANE) {
         ImGui::Text("\nPlane correction");
         if(ImGui::Button("Loop begin")) {

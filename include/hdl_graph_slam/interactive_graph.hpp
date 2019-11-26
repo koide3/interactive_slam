@@ -23,6 +23,10 @@ namespace hdl_graph_slam {
 
 class InformationMatrixCalculator;
 
+/**
+ * @brief core class to interactively manipulate a pose graph
+ *
+ */
 class InteractiveGraph : protected GraphSLAM {
 public:
   InteractiveGraph();
@@ -73,6 +77,7 @@ public:
 
   ParameterServer params;
 
+  // optimization statistics (just for visualization)
   int iterations;
   double chi2_before;
   double chi2_after;
