@@ -6,6 +6,10 @@
 
 namespace glk {
 
+/**
+ * @brief Loader class for PLY file format
+ * @note  if it fails to read a file, the members become empty
+ */
 class PLYLoader {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

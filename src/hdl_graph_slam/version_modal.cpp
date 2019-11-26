@@ -18,7 +18,7 @@ bool VersionModal::run() {
     ImGui::Text("Interactive SLAM");
     ImGui::Text("Version: %d.%d.%d", IS_VERSION_MAJOR, IS_VERSION_MINOR, IS_VERSION_REVISION);
     ImGui::Text("Commit hash: %s", LAST_COMMIT_HASH);
-    ImGui::Text("Commit data: %s", LAST_COMMIT_DATE);
+    ImGui::Text("Commit date: %s", LAST_COMMIT_DATE);
     ImGui::Text("\nK.Koide (k.koide@aist.go.jp)");
     ImGui::Text("Smart Mobility Research Team");
     ImGui::Text("AIST, Japan");

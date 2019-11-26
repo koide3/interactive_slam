@@ -402,8 +402,8 @@ public:
    * @param glsl_version    glsl version
    * @return if successfully initialized
    */
-  bool init(const Eigen::Vector2i& size, const char* glsl_version = "#version 330") override {
-    if(!Application::init(size, glsl_version)) {
+  bool init(const char* window_name, const Eigen::Vector2i& size, const char* glsl_version = "#version 330") override {
+    if(!Application::init(window_name, size, glsl_version)) {
       return false;
     }
 
@@ -669,7 +669,7 @@ private:
 int main(int argc, char** argv) {
   std::unique_ptr<guik::Application> app(new hdl_graph_slam::Odometry2GraphApplication());
 
-  if(!app->init(Eigen::Vector2i(1920, 1080))) {
+  if(!app->init("Odometry2Graph", Eigen::Vector2i(1920, 1080))) {
     return 1;
   }
 

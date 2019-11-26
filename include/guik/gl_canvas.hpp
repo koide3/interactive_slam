@@ -12,6 +12,10 @@
 
 namespace guik {
 
+/**
+ * @brief OpenGL canvas for imgui
+ *
+ */
 class GLCanvas {
 public:
   GLCanvas(const std::string& data_directory, const Eigen::Vector2i& size);

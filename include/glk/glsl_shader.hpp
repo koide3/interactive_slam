@@ -10,17 +10,34 @@
 
 namespace glk {
 
+/**
+ * @brief GLSL shader class
+ *
+ */
 class GLSLShader {
 public:
   GLSLShader() {}
 
+  /**
+   * @brief load GLSL shader from files
+   *
+   * @param shader_path  "shader_path".vert and "shader_path".frag will be loaded
+   * @return             if the shader is successfully loaded
+   */
   bool init(const std::string& shader_path);
 
+  /**
+   * @brief bind the shader
+   */
   void use() const { glUseProgram(shader_program); }
 
+  /** @brief find attribute variable location **/
   GLint attrib(const std::string& name);
+  /** @brief find uniform variable location **/
   GLint uniform(const std::string& name);
 
+
+  /*** getter and setter for uniforms ***/
   Eigen::Vector4f get_uniform4f(const std::string& name) {
     Eigen::Vector4f vec;
     glGetUniformfv(shader_program, uniform(name), vec.data());

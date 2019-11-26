@@ -9,6 +9,10 @@
 
 namespace glk {
 
+/**
+ * @brief Drawable object interface
+ *
+ */
 class Drawable {
 public:
   virtual ~Drawable() {}

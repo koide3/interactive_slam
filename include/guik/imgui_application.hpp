@@ -15,7 +15,7 @@ public:
   Application();
   virtual ~Application();
 
-  virtual bool init(const Eigen::Vector2i& size, const char* glsl_version = "#version 330");
+  virtual bool init(const char* window_name, const Eigen::Vector2i& size, const char* glsl_version = "#version 330");
 
   void run();
 
