@@ -27,6 +27,10 @@ InteractiveGraph::InteractiveGraph() : GraphSLAM("lm_var_cholmod"), iterations(0
   inf_calclator.reset(new InformationMatrixCalculator());
   inf_calclator->load(params);
   edge_id_gen = 0;
+
+  anchor_node = nullptr;
+  anchor_edge = nullptr;
+  floor_node = nullptr;
 }
 
 InteractiveGraph::~InteractiveGraph() {
@@ -36,20 +40,29 @@ InteractiveGraph::~InteractiveGraph() {
 }
 
 bool InteractiveGraph::load_map_data(const std::string& directory, guik::ProgressInterface& progress) {
+  // load graph file
   progress.set_title("Opening " + directory);
   progress.set_text("loading graph");
   if(!load(directory + "/graph.g2o")) {
     return false;
   }
 
+  // re-assign edge ids
+  // note: newly created edges may have inconsistent IDs (who cares!)
   edge_id_gen = 0;
   for(auto& edge : graph->edges()) {
     edge->setId(edge_id_gen++);
   }
 
+  // load keyframes
   progress.increment();
   progress.set_text("loading keyframes");
   if(!load_keyframes(directory, progress)) {
+    return false;
+  }
+
+  // load anchor and floor nodes
+  if(!load_special_nodes(directory, progress)) {
     return false;
   }
 
@@ -68,13 +81,20 @@ bool InteractiveGraph::merge_map_data(InteractiveGraph& graph_, const Interactiv
   }
 
   g2o::Factory* factory = g2o::Factory::instance();
-  std::unordered_map<long, g2o::HyperGraph::Vertex*> new_vertices_map;
+  std::unordered_map<long, g2o::HyperGraph::Vertex*> new_vertices_map;    // old vertex Id -> new vertex instance map
+
+  // remove the anchor node in the graph to be merged
+  if(graph_.anchor_node) {
+    graph_.graph->removeEdge(graph_.anchor_edge);
+    graph_.graph->detachVertex(graph_.anchor_node);
+  }
 
   // clone vertices
   for(const auto& vertex : graph_.graph->vertices()) {
     long new_vertex_id = ++max_vertex_id;
     auto v = dynamic_cast<g2o::OptimizableGraph::Vertex*>(vertex.second);
 
+    // copy params via g2o::Factory
     std::stringstream sst;
     if(!v->write(sst)) {
       std::cerr << "error: failed to write vertex data" << std::endl;
@@ -90,6 +110,7 @@ bool InteractiveGraph::merge_map_data(InteractiveGraph& graph_, const Interactiv
     new_v->setId(new_vertex_id);
     graph->addVertex(new_v);
 
+    // for remapping
     new_vertices_map[v->id()] = new_v;
   }
 
@@ -98,6 +119,7 @@ bool InteractiveGraph::merge_map_data(InteractiveGraph& graph_, const Interactiv
     long new_edge_id = ++max_edge_id;
     auto e = dynamic_cast<g2o::OptimizableGraph::Edge*>(edge);
 
+    // copy params via g2o::Factory
     std::stringstream sst;
     if(!e->write(sst)) {
       std::cerr << "error: failed to write edge data" << std::endl;
@@ -110,10 +132,13 @@ bool InteractiveGraph::merge_map_data(InteractiveGraph& graph_, const Interactiv
       return false;
     }
     new_e->setId(new_edge_id);
+
+    // remap vertices with new ones
     for(int i = 0; i < new_e->vertices().size(); i++) {
       new_e->vertices()[i] = new_vertices_map[e->vertices()[i]->id()];
     }
 
+    // copy robust kernel
     if(e->robustKernel()) {
       g2o::RobustKernel* kernel = nullptr;
 
@@ -144,6 +169,89 @@ bool InteractiveGraph::merge_map_data(InteractiveGraph& graph_, const Interactiv
   return true;
 }
 
+bool InteractiveGraph::load_special_nodes(const std::string& directory, guik::ProgressInterface& progress) {
+  // load special nodes from file
+  std::ifstream ifs(directory + "/special_nodes.csv");
+  if(ifs) {
+    while(!ifs.eof()) {
+      std::string line;
+      std::getline(ifs, line);
+
+      if(line.empty()) {
+        continue;
+      }
+
+      std::stringstream sst(line);
+      std::string tag;
+      sst >> tag;
+
+      // load anchor node
+      if(tag == "anchor_node") {
+        long anchor_node_id = -1;
+        sst >> anchor_node_id;
+
+        if(anchor_node_id < 0) {
+          continue;
+        }
+
+        anchor_node = dynamic_cast<g2o::VertexSE3*>(graph->vertex(anchor_node_id));
+        if(anchor_node == nullptr) {
+          std::cerr << "failed to cast anchor node to VertexSE3!!" << std::endl;
+          return false;
+        }
+        if(anchor_node->edges().empty()) {
+          std::cerr << "anchor node is not connected with any edges!!" << std::endl;
+          return false;
+        }
+
+        anchor_edge = dynamic_cast<g2o::EdgeSE3*>(*anchor_node->edges().begin());
+        if(anchor_edge == nullptr) {
+          std::cerr << "failed to cast anchor edge to EdgeSE3!!" << std::endl;
+          return false;
+        }
+
+      }
+      // load floor node
+      else if(tag == "floor_node") {
+        long floor_node_id = -1;
+        sst >> floor_node_id;
+
+        if(floor_node_id < 0) {
+          continue;
+        }
+
+        floor_node = dynamic_cast<g2o::VertexPlane*>(graph->vertex(floor_node_id));
+        if(floor_node == nullptr) {
+          std::cerr << "failed to cast floor node to VertexPlane!!" << std::endl;
+          return false;
+        }
+      }
+    }
+  }
+
+  // create anchor node if it is not loaded yet
+  if(anchor_node == nullptr) {
+    std::cout << "create new anchor" << std::endl;
+    using ID_Keyframe = std::pair<long, InteractiveKeyFrame::Ptr>;
+    auto first_keyframe = std::min_element(keyframes.begin(), keyframes.end(), [=](const ID_Keyframe& lhs, const ID_Keyframe& rhs) { return lhs.first < rhs.first; });
+
+    if(first_keyframe == keyframes.end()) {
+      std::cerr << "corrupted graph file!!" << std::endl;
+      return false;
+    }
+
+    anchor_node = add_se3_node(first_keyframe->second->node->estimate());
+    anchor_edge = add_se3_edge(anchor_node, first_keyframe->second->node, Eigen::Isometry3d::Identity(), Eigen::MatrixXd::Identity(6, 6) * 0.1);
+  }
+
+  std::cout << "anchor_node:" << anchor_node->id() << std::endl;
+  std::cout << "anchor_edge:" << anchor_edge->vertices()[0]->id() << " - " << anchor_edge->vertices()[1]->id() << std::endl;
+
+  anchor_node->setFixed(true);
+
+  return true;
+}
+
 bool InteractiveGraph::load_keyframes(const std::string& directory, guik::ProgressInterface& progress) {
   progress.set_maximum(graph->vertices().size());
   for(int i = 0;; i++) {
@@ -166,6 +274,10 @@ bool InteractiveGraph::load_keyframes(const std::string& directory, guik::Progre
   return true;
 }
 
+long InteractiveGraph::anchor_node_id() const {
+  return anchor_node ? anchor_node->id() : -1;
+}
+
 g2o::EdgeSE3* InteractiveGraph::add_edge(const KeyFrame::Ptr& key1, const KeyFrame::Ptr& key2, const Eigen::Isometry3d& relative_pose, const std::string& robust_kernel, double robust_kernel_delta) {
   Eigen::MatrixXd inf = inf_calclator->calc_information_matrix(key1->cloud, key2->cloud, relative_pose);
   g2o::EdgeSE3* edge = add_se3_edge(key1->node, key2->node, relative_pose, inf);
@@ -181,6 +293,7 @@ g2o::EdgeSE3* InteractiveGraph::add_edge(const KeyFrame::Ptr& key1, const KeyFra
 g2o::VertexPlane* InteractiveGraph::add_plane(const Eigen::Vector4d& coeffs) {
   return add_plane_node(coeffs);
 }
+
 g2o::EdgeSE3Plane* InteractiveGraph::add_edge(const KeyFrame::Ptr& v_se3, g2o::VertexPlane* v_plane, const Eigen::Vector4d& coeffs, const Eigen::MatrixXd& information, const std::string& robust_kernel, double robust_kernel_delta) {
   g2o::EdgeSE3Plane* edge = add_se3_plane_edge(v_se3->node, v_plane, coeffs, information);
   edge->setId(edge_id_gen++);
@@ -261,6 +374,19 @@ bool InteractiveGraph::add_edge_prior_distance(long plane_vertex_id, double dist
 }
 
 void InteractiveGraph::optimize(int num_iterations) {
+  if(anchor_node) {
+    // move the anchor node to the position of the very first keyframe
+    // so that the keyframe can move freely while trying to stay around the origin
+    g2o::VertexSE3* first_keyframe = dynamic_cast<g2o::VertexSE3*>(anchor_edge->vertices()[1]);
+    if(first_keyframe == nullptr) {
+      std::cerr << "failed to cast the node which is likely to be the fist keyframe to VertexSE3";
+    } else {
+      anchor_node->setEstimate(first_keyframe->estimate());
+    }
+  }
+
+  // !! bad tech !!
+  // override std::cerr with optimization_stream to catch optimization progress messages
   optimization_stream.str("");
   optimization_stream.clear();
 
@@ -289,6 +415,19 @@ void InteractiveGraph::optimize_background(int num_iterations) {
     optimization_thread.join();
   }
 
+  if(anchor_node) {
+    // move the anchor node to the position of the very first keyframe
+    // so that the keyframe can move freely while trying to stay around the origin
+    g2o::VertexSE3* first_keyframe = dynamic_cast<g2o::VertexSE3*>(anchor_edge->vertices()[1]);
+    if(first_keyframe == nullptr) {
+      std::cerr << "failed to cast the node which is likely to be the fist keyframe to VertexSE3";
+    } else {
+      anchor_node->setEstimate(first_keyframe->estimate());
+    }
+  }
+
+  // !! bad tech !!
+  // override std::cerr with optimization_stream to catch optimization progress messages
   optimization_stream.str("");
   optimization_stream.clear();
 
@@ -356,6 +495,11 @@ void InteractiveGraph::dump(const std::string& directory, guik::ProgressInterfac
     sst << boost::format("%s/%06d") % directory % (keyframe_id++);
     keyframe.second->save(sst.str());
   }
+
+  std::ofstream ofs(directory + "/special_nodes.csv");
+  ofs << "anchor_node " << (anchor_node != nullptr ? anchor_node->id() : -1) << std::endl;
+  ofs << "anchor_edge " << -1 << std::endl;
+  ofs << "floor_node " << (floor_node != nullptr ? floor_node->id() : -1) << std::endl;
 }
 
 bool InteractiveGraph::save_pointcloud(const std::string& filename, guik::ProgressInterface& progress) {
