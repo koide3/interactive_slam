@@ -5,7 +5,7 @@
 
 namespace hdl_graph_slam {
 
-GraphEditWindow::GraphEditWindow(std::shared_ptr<InteractiveGraphView> & graph) : show_window(false), selected_vertex(0), graph(graph) {}
+GraphEditWindow::GraphEditWindow(std::shared_ptr<InteractiveGraphView>& graph) : show_window(false), selected_vertex(0), graph(graph) {}
 GraphEditWindow::~GraphEditWindow() {}
 
 void GraphEditWindow::draw_ui() {
@@ -18,12 +18,22 @@ void GraphEditWindow::draw_ui() {
   ImGuiTabBarFlags flags = ImGuiTabBarFlags_None;
   if(ImGui::BeginTabBar("tabbar", flags)) {
     if(ImGui::BeginTabItem("Fixed vertices")) {
+      g2o::VertexSE3* anchor_node = dynamic_cast<g2o::VertexSE3*>(graph->graph->vertex(graph->anchor_node_id()));
+      if(anchor_node) {
+        bool fixed = anchor_node->fixed();
+        if(ImGui::Checkbox("Anchor Fixed", &fixed)) {
+          anchor_node->setFixed(fixed);
+        }
+      } else {
+        ImGui::Text("warning: No anchor node created!!");
+      }
+
       bool fixed_vertex_exists = false;
       for(const auto& vertex : graph->graph->vertices()) {
         auto v = dynamic_cast<g2o::OptimizableGraph::Vertex*>(vertex.second);
         assert(v != nullptr);
 
-        if(!v->fixed()) {
+        if(!v->fixed() || v->id() == graph->anchor_node_id()) {
           continue;
         }
 
@@ -46,14 +56,14 @@ void GraphEditWindow::draw_ui() {
     }
 
     if(ImGui::BeginTabItem("Some fancy function")) {
-      for(const auto& edge: graph->graph->edges()) {
+      for(const auto& edge : graph->graph->edges()) {
         auto e = dynamic_cast<g2o::OptimizableGraph::Edge*>(edge);
         assert(e != nullptr);
       }
 
       ImGui::Text("hello");
       ImGui::EndTabItem();
-      }
+    }
 
     ImGui::EndTabBar();
   }

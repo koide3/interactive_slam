@@ -16,7 +16,7 @@ We are looking forward to hearing your feedback and additional feature requests 
 
 This package has been tested on Ubuntu 18.04 & ROS melodic.
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/294925db25014c2ba6698cb2841de365)](https://www.codacy.com/manual/koide3/interactive_slam?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=koide3/interactive_slam&amp;utm_campaign=Badge_Grade)　[![Build Status](https://travis-ci.org/koide3/interactive_slam.svg?branch=master)](https://travis-ci.org/koide3/interactive_slam)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/294925db25014c2ba6698cb2841de365)](https://www.codacy.com/manual/koide3/interactive_slam?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=koide3/interactive_slam&amp;utm_campaign=Badge_Grade)　[![Build Status](https://travis-ci.org/SMRT-AIST/interactive_slam.svg?branch=master)](https://travis-ci.org/koide3/interactive_slam)
 
 ## Installation
 ***interactive_slam*** depends on the following libraries:

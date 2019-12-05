@@ -10,6 +10,9 @@
 
 namespace hdl_graph_slam {
 
+/**
+ * @brief g2o cache class to calculate and store vertex plane position
+ */
 class VertexPlaneCache : public g2o::HyperGraph::Data {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW

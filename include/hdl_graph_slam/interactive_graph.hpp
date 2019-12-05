@@ -17,12 +17,18 @@
 
 namespace g2o {
 class VertexPlane;
-}
+class VertexSE3;
+class VertexSE3Edge;
+}  // namespace g2o
 
 namespace hdl_graph_slam {
 
 class InformationMatrixCalculator;
 
+/**
+ * @brief core class to interactively manipulate a pose graph
+ *
+ */
 class InteractiveGraph : protected GraphSLAM {
 public:
   InteractiveGraph();
@@ -30,6 +36,8 @@ public:
 
   bool load_map_data(const std::string& directory, guik::ProgressInterface& progress);
   bool merge_map_data(InteractiveGraph& graph_, const InteractiveKeyFrame::Ptr& key1, const InteractiveKeyFrame::Ptr& key2, const Eigen::Isometry3d& relative_pose);
+
+  long anchor_node_id() const;
 
   g2o::EdgeSE3* add_edge(const KeyFrame::Ptr& key1, const KeyFrame::Ptr& key2, const Eigen::Isometry3d& relative_pose, const std::string& robust_kernel = "NONE", double robust_kernel_delta = 0.1);
 
@@ -59,9 +67,14 @@ public:
   using GraphSLAM::set_solver;
 
 private:
+  bool load_special_nodes(const std::string& directory, guik::ProgressInterface& progress);
   bool load_keyframes(const std::string& directory, guik::ProgressInterface& progress);
 
 private:
+  g2o::VertexSE3* anchor_node;
+  g2o::EdgeSE3* anchor_edge;
+  g2o::VertexPlane* floor_node;
+
   long edge_id_gen;
   std::thread optimization_thread;
 
@@ -73,6 +86,7 @@ public:
 
   ParameterServer params;
 
+  // optimization statistics (just for visualization)
   int iterations;
   double chi2_before;
   double chi2_after;
