@@ -3,7 +3,7 @@ project(interactive_slam)
 
 set (IS_VERSION_MAJOR 1)
 set (IS_VERSION_MINOR 0)
-set (IS_VERSION_REVISION 0)
+set (IS_VERSION_REVISION 2)
 
 execute_process (COMMAND git rev-parse --short HEAD WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR} OUTPUT_VARIABLE GIT_LAST_COMMIT_HASH OUTPUT_STRIP_TRAILING_WHITESPACE)
 execute_process (COMMAND git log -1 --format=%cd WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR} OUTPUT_VARIABLE GIT_LAST_COMMIT_DATE OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -17,6 +17,7 @@ configure_file (
 )
 
 # add_compile_options(-std=c++11)
+set(CMAKE_CXX_FLAGS "-std=c++11")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 find_package(catkin REQUIRED COMPONENTS roscpp ndt_omp hdl_graph_slam)

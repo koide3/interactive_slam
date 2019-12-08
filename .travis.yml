@@ -10,5 +10,11 @@ matrix:
     - name: "Bionic melodic"
       env: ROS_DISTRO=melodic
 
+    - name: "Bionic melodic LLVM"
+      env: ROS_DISTRO=melodic_llvm
+
+    - name: "Xenial kinetic LLVM"
+      env: ROS_DISTRO=kinetic_llvm
+
 script:
   - docker build -f ./docker/$ROS_DISTRO/Dockerfile .
