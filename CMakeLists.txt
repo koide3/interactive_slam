@@ -16,7 +16,7 @@ configure_file (
   "${PROJECT_SOURCE_DIR}/include/hdl_graph_slam/version.h"
 )
 
-add_definitions(-std=c++11)
+# add_definitions(-std=c++11)
 set(CMAKE_CXX_FLAGS "-std=c++11")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 

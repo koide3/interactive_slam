@@ -3,6 +3,7 @@
 #include <g2o/types/slam3d/vertex_se3.h>
 
 #include <pcl/search/kdtree.h>
+#include <pcl/search/impl/kdtree.hpp>
 #include <pcl/features/normal_3d_omp.h>
 #include <pcl/features/moment_of_inertia_estimation.h>
 

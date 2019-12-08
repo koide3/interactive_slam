@@ -2,6 +2,7 @@
 #define AUTOMATIC_LOOP_CLOSE_WINDOW_HPP
 
 #include <mutex>
+#include <atomic>
 #include <thread>
 #include <memory>
 #include <boost/optional.hpp>

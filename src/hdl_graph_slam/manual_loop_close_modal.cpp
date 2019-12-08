@@ -4,6 +4,7 @@
 
 #include <pcl/features/fpfh_omp.h>
 #include <pcl/features/normal_3d_omp.h>
+#include <pcl/search/impl/kdtree.hpp>
 
 #include <hdl_graph_slam/information_matrix_calculator.hpp>
 
