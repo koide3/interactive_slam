@@ -47,6 +47,17 @@ cd ~/catkin_ws
 catkin_make -DCMAKE_BUILD_TYPE=Release
 ```
 
+***ROS Kinetic users***  
+This package cannot be built using gcc and ld on Ubuntu 16. If you are on Ubuntu 16 and ROS kinetic, try LLVM toolchain. Note: we recommend to use this package on melodic since we do only build-test but not run-test on kinetic.
+
+```bash
+sudo apt install clang-6.0 lld-6.0
+sudo update-alternatives --install /usr/bin/ld ld /usr/bin/ld.lld-6.0 50
+sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-6.0 50
+sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-6.0 50
+cd ~/catkin_ws && CC=clang CXX=clang++ catkin_make -DCMAKE_BUILD_TYPE=Release
+```
+
 ## Examples
 
 ### Example1 - Basic usage with hdl_graph_slam
