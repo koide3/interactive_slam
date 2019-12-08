@@ -2,7 +2,7 @@ FROM ros:kinetic
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
  && apt-get install --no-install-recommends -y wget nano build-essential \
- clang-6.0 llvm-6.0 libomp-dev \
+ clang-6.0 lld-6.0 libomp-dev \
  ros-kinetic-geodesy ros-kinetic-pcl-ros ros-kinetic-nmea-msgs ros-kinetic-rviz \
  ros-kinetic-tf-conversions ros-kinetic-libg2o libglm-dev libglfw3-dev \
  && apt-get clean \

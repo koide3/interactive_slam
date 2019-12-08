@@ -2,7 +2,7 @@ FROM ros:melodic
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
  && apt-get install -y --no-install-recommends wget nano build-essential \
- clang llvm libomp-dev \
+ clang lld libomp-dev \
  ros-melodic-geodesy ros-melodic-pcl-ros ros-melodic-nmea-msgs ros-melodic-rviz \
  ros-melodic-tf-conversions ros-melodic-libg2o libglm-dev libglfw3-dev \
  && apt-get clean \
@@ -21,7 +21,7 @@ WORKDIR /root/catkin_ws/src/interactive_slam
 RUN git submodule init
 RUN git submodule update
 
-RUN update-alternatives --install /usr/bin/ld ld /usr/bin/ld.lld 50
+RUN update-alternatives --install /usr/bin/ld ld /usr/bin/ld.lld-6.0 50
 
 WORKDIR /root/catkin_ws
 RUN /bin/bash -c '. /opt/ros/melodic/setup.bash; CC=clang CXX=clang++ catkin_make'
