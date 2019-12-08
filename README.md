@@ -16,7 +16,7 @@ We are looking forward to hearing your feedback and additional feature requests 
 
 This package has been tested on Ubuntu 18.04 & ROS melodic.
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/294925db25014c2ba6698cb2841de365)](https://www.codacy.com/manual/koide3/interactive_slam?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=koide3/interactive_slam&amp;utm_campaign=Badge_Grade)　[![Build Status](https://travis-ci.org/SMRT-AIST/interactive_slam.svg?branch=master)](https://travis-ci.org/koide3/interactive_slam)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/294925db25014c2ba6698cb2841de365)](https://www.codacy.com/manual/koide3/interactive_slam?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=koide3/interactive_slam&amp;utm_campaign=Badge_Grade)　[![Build Status](https://travis-ci.org/SMRT-AIST/interactive_slam.svg?branch=master)](https://travis-ci.org/SMRT-AIST/interactive_slam)
 
 ## Installation
 ***interactive_slam*** depends on the following libraries:
@@ -45,6 +45,17 @@ git clone https://github.com/SMRT-AIST/interactive_slam --recursive
 
 cd ~/catkin_ws
 catkin_make -DCMAKE_BUILD_TYPE=Release
+```
+
+***ROS Kinetic users***  
+This package cannot be built using gcc and ld on Ubuntu 16. If you are on Ubuntu 16 and ROS kinetic, try LLVM toolchain. Note: we recommend to use this package on melodic since we do only build-test but not run-test on kinetic.
+
+```bash
+sudo apt install clang-6.0 lld-6.0
+sudo update-alternatives --install /usr/bin/ld ld /usr/bin/ld.lld-6.0 50
+sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-6.0 50
+sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-6.0 50
+cd ~/catkin_ws && CC=clang CXX=clang++ catkin_make -DCMAKE_BUILD_TYPE=Release
 ```
 
 ## Examples

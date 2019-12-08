@@ -2,6 +2,7 @@
 #define EDGE_REFINEMENT_WINDOW_HPP
 
 #include <mutex>
+#include <atomic>
 #include <thread>
 #include <memory>
 #include <random>

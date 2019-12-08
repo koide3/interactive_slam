@@ -4,7 +4,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends && apt-get inst
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
-
 RUN mkdir -p /root/catkin_ws/src
 WORKDIR /root/catkin_ws/src
 RUN /bin/bash -c '. /opt/ros/melodic/setup.bash; catkin_init_workspace'
