@@ -21,6 +21,8 @@ RUN git submodule init
 RUN git submodule update
 
 RUN update-alternatives --install /usr/bin/ld ld /usr/bin/ld.lld-6.0 50
+RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-6.0 50
+RUN update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-6.0 50
 
 WORKDIR /root/catkin_ws
 RUN /bin/bash -c '. /opt/ros/kinetic/setup.bash; CC=clang CXX=clang++ catkin_make'
