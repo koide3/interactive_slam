@@ -7,14 +7,14 @@ services:
 
 matrix:
   include:
-    - name: "Bionic melodic"
-      env: ROS_DISTRO=melodic
+    - name: "Xenial kinetic LLVM"
+      env: ROS_DISTRO=kinetic_llvm
 
     - name: "Bionic melodic LLVM"
       env: ROS_DISTRO=melodic_llvm
 
-    - name: "Xenial kinetic LLVM"
-      env: ROS_DISTRO=kinetic_llvm
+    - name: "Bionic melodic"
+      env: ROS_DISTRO=melodic
 
 script:
   - docker build -f ./docker/$ROS_DISTRO/Dockerfile .
