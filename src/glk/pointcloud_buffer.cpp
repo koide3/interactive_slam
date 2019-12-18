@@ -55,9 +55,9 @@ void PointCloudBuffer::draw(glk::GLSLShader& shader) {
   glEnableVertexAttribArray(position_loc);
 
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * stride, 0);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, 0);
 
-  glDrawArrays(GL_POINTS, 0, num_points / 2);
+  glDrawArrays(GL_POINTS, 0, num_points);
 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
   glDisableVertexAttribArray(0);
