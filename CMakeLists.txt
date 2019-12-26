@@ -20,7 +20,7 @@ configure_file (
 set(CMAKE_CXX_FLAGS "-std=c++11")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
-find_package(catkin REQUIRED COMPONENTS roscpp ndt_omp hdl_graph_slam)
+find_package(catkin REQUIRED COMPONENTS roscpp ndt_omp hdl_graph_slam roslib)
 
 find_package(GLM REQUIRED)
 find_package(OpenGL REQUIRED)
@@ -104,6 +104,9 @@ add_executable(odometry2graph
 )
 target_link_libraries(odometry2graph
   ${PCL_LIBRARIES}
+  ${G2O_TYPES_DATA}
+  ${G2O_CORE_LIBRARY}
+  ${G2O_TYPES_SLAM3D}
   ${OPENGL_LIBRARIES}
   ${catkin_LIBRARIES}
   glfw
@@ -137,10 +140,10 @@ target_link_libraries(interactive_slam
   ${G2O_TYPES_SLAM3D}
   ${G2O_TYPES_SLAM3D_ADDONS}
   ${OPENGL_LIBRARIES}
+  ${catkin_LIBRARIES}
   glfw
   guik
   imgui
-  hdl_graph_slam_nodelet
 )
 
 file(COPY data DESTINATION .)
