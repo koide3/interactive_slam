@@ -2,5 +2,10 @@
 #define IS_VERSION_MINOR 0
 #define IS_VERSION_REVISION 2
 
+<<<<<<< HEAD
 #define LAST_COMMIT_HASH "71e2d0f"
 #define LAST_COMMIT_DATE "Sun Dec 8 20:54:13 2019 +0900"
+=======
+#define LAST_COMMIT_HASH "2cd02af"
+#define LAST_COMMIT_DATE "Sun Dec 8 14:24:39 2019 +0900"
+>>>>>>> 71e2d0fb348687dc55454bf29fdac64996232d11
