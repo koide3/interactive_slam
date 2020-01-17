@@ -55,7 +55,8 @@ sudo apt install clang-6.0 lld-6.0
 sudo update-alternatives --install /usr/bin/ld ld /usr/bin/ld.lld-6.0 50
 sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-6.0 50
 sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-6.0 50
-cd ~/catkin_ws && CC=clang CXX=clang++ catkin_make -DCMAKE_BUILD_TYPE=Release
+cd ~/catkin_ws && rm -rf build devel    # be aware of that this command removes build and devel directories
+CC=clang CXX=clang++ catkin_make -DCMAKE_BUILD_TYPE=Release
 ```
 
 ## Examples
