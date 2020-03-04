@@ -1,3 +1,28 @@
+## Installation notes for ubuntu 16.04 and kinetic 
+Setup in a catkin workspace:
+cd ~/ckws_hdl/src/
+git clone https://github.com/SMRT-AIST/interactive_slam --recursive
+git clone https://github.com/koide3/ndt_omp
+git clone https://github.com/koide3/odometry_saver
+cd ..
+source devel/setup.bash
+sudo apt-get -f install
+sudo apt-get install libpng12-dev libglm-dev libjpeg-dev
+sudo apt-get install libglm-dev libglfw3-dev
+sudo apt install clang-6.0 lld-6.0
+sudo update-alternatives --install /usr/bin/ld ld /usr/bin/ld.lld-6.0 50
+sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-6.0 50
+sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-6.0 50
+rm -rf build devel
+CC=clang CXX=clang++ catkin_make -DCMAKE_BUILD_TYPE=Release
+source devel/setup.bash
+//get suitable data
+rosrun interactive_slam interactive_slam
+
+
+
+
+
 # interactive_slam
 ***interactive_slam*** is an open source 3D LIDAR-based mapping framework. In contrast to existing automatic SLAM packages, we aim to develop a semi-automatic framework which allows the user to interactively and intuitively correct mapping failures (e.g., corrupted odometry, wrong loop detection, distorted map, etc) with minimum effort. This framework provides several map correction features:
   - [Manual & Automatic] Loop closing
