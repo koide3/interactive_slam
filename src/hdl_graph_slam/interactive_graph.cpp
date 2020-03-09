@@ -264,11 +264,10 @@ bool InteractiveGraph::load_keyframes(const std::string& directory, guik::Progre
     if(!keyframe->node) {
       std::cerr << "error : failed to load keyframe!!" << std::endl;
       std::cerr << "      : " << keyframe_dir << std::endl;
-      return false;
+    } else {
+      keyframes[keyframe->id()] = keyframe;
+      progress.increment();
     }
-
-    keyframes[keyframe->id()] = keyframe;
-    progress.increment();
   }
 
   return true;

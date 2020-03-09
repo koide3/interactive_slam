@@ -35,10 +35,6 @@ GLCanvas::GLCanvas(const std::string& data_directory, const Eigen::Vector2i& siz
     return;
   }
 
-  // if (!shader->init(data_directory + "/shader/phong")) {
-  //   shader.reset();
-  //   return;
-  // }
   shader->use();
 
   camera_control.reset(new guik::ArcCameraControl());
