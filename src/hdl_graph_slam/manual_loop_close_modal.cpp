@@ -1,5 +1,6 @@
 #include <hdl_graph_slam/manual_loop_close_model.hpp>
 
+#include <g2o/types/slam3d/edge_se3.h>
 #include <pcl/registration/sample_consensus_prerejective.h>
 
 #include <pcl/features/fpfh_omp.h>
@@ -149,8 +150,35 @@ bool ManualLoopCloseModal::run() {
 
       if (ImGui::Button("Add edge")) {
         Eigen::Isometry3d relative = begin_keyframe_pose.inverse() * end_keyframe_pose;
-        graph->add_edge(begin_keyframe->lock(), end_keyframe->lock(), relative, robust_kernel.type(), robust_kernel.delta());
-        graph->optimize();
+        auto begin_vertex = begin_keyframe->lock();
+        auto end_vertex = end_keyframe->lock();
+
+        bool update_existing = false;
+        for(const auto& edge : begin_vertex->node->edges()) {
+          g2o::EdgeSE3* se3_edge = dynamic_cast<g2o::EdgeSE3*>(edge);
+          if(se3_edge == nullptr) {
+            continue;
+          }
+
+          if(se3_edge->vertices()[0] == begin_vertex->node && se3_edge->vertices()[1] == end_vertex->node) {
+            std::cout << "********" << std::endl;
+            std::cout << "forward" << std::endl;
+            update_existing = true;
+            se3_edge->setMeasurement(relative);
+            break;
+          }
+          if(se3_edge->vertices()[1] == begin_vertex->node && se3_edge->vertices()[0] == end_vertex->node) {
+            std::cout << "********" << std::endl;
+            std::cout << "backward" << std::endl;
+            update_existing = true;
+            se3_edge->setMeasurement(relative.inverse());
+            break;
+          }
+        }
+
+        if(!update_existing) {
+          graph->add_edge(begin_keyframe->lock(), end_keyframe->lock(), relative, robust_kernel.type(), robust_kernel.delta());
+        }
 
         ImGui::CloseCurrentPopup();
         begin_keyframe = nullptr;
