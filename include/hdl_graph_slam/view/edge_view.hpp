@@ -22,13 +22,15 @@ public:
   long id() const;
   virtual Eigen::Vector3f representative_point() const = 0;
 
-  virtual void context_menu();
+  virtual void context_menu(bool& do_delete);
 
 private:
   EdgeView();
 
 protected:
   LineBuffer& line_buffer;
+
+public:
   g2o::HyperGraph::Edge* edge;
 };
 

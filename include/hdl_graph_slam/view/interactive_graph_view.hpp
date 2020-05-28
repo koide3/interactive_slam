@@ -87,6 +87,31 @@ public:
     line_buffer->draw(shader);
   }
 
+  void delete_edge(EdgeView::Ptr edge) {
+    std::cout << "delete edge " << edge->id() << std::endl;
+
+    auto found = std::find(edges_view.begin(), edges_view.end(), edge);
+    while(found != edges_view.end()) {
+      edges_view.erase(found);
+      found = std::find(edges_view.begin(), edges_view.end(), edge);
+    }
+
+    auto found2 = std::find(drawables.begin(), drawables.end(), edge);
+    while(found2 != drawables.end()) {
+      drawables.erase(found2);
+      found2 = std::find(drawables.begin(), drawables.end(), edge);
+    }
+
+    for(auto itr = edges_view_map.begin(); itr != edges_view_map.end(); itr++) {
+      if(itr->second == edge) {
+        edges_view_map.erase(itr);
+        break;
+      }
+    }
+
+    graph->removeEdge(edge->edge);
+  }
+
 public:
   std::unique_ptr<LineBuffer> line_buffer;
 
