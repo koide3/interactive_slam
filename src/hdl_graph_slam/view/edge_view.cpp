@@ -35,7 +35,7 @@ EdgeView::~EdgeView() {}
 
 long EdgeView::id() const { return edge->id(); }
 
-void EdgeView::context_menu() {
+void EdgeView::context_menu(bool& do_delete) {
   g2o::Factory* factory = g2o::Factory::instance();
 
   g2o::OptimizableGraph::Edge* e = dynamic_cast<g2o::OptimizableGraph::Edge*>(edge);
@@ -68,6 +68,8 @@ void EdgeView::context_menu() {
       robust_kernel->setDelta(delta);
     }
   }
+
+  do_delete = ImGui::Button("Delete Edge");
 }
 
 

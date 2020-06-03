@@ -621,7 +621,16 @@ private:
 
         for(auto& edge : graph->edges_view) {
           if(edge->id() == picked_id) {
-            edge->context_menu();
+            bool do_delete = false;
+            edge->context_menu(do_delete);
+
+            if(do_delete) {
+              clear_selections();
+              graph->delete_edge(edge);
+              ImGui::CloseCurrentPopup();
+            }
+
+            break;
           }
         }
       }
