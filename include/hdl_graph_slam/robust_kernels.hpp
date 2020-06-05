@@ -16,7 +16,7 @@ public:
   {}
 
   RobustKernels()
-  : kernel_type(1),
+  : kernel_type(0),
     kernel_delta(0.01),
     kernels({"NONE", "Huber", "Cauchy", "DCS", "Fair", "GemanMcClure", "PseudoHuber", "Staturated", "Tukey", "Welsch"})
   {}

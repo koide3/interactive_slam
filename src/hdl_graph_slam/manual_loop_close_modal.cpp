@@ -179,6 +179,7 @@ bool ManualLoopCloseModal::run() {
         if(!update_existing) {
           graph->add_edge(begin_keyframe->lock(), end_keyframe->lock(), relative, robust_kernel.type(), robust_kernel.delta());
         }
+        graph->optimize();
 
         ImGui::CloseCurrentPopup();
         begin_keyframe = nullptr;
