@@ -1,4 +1,4 @@
-FROM ros:melodic
+FROM ros:noetic
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
  && apt-get install -y --no-install-recommends wget nano build-essential \
