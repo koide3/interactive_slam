@@ -7,8 +7,6 @@ services:
 
 matrix:
   include:
-    - name: "Xenial kinetic LLVM"
-      env: ROS_DISTRO=kinetic_llvm
     - name: "Bionic melodic LLVM"
       env: ROS_DISTRO=melodic_llvm
     - name: "Bionic melodic"
