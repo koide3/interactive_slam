@@ -16,8 +16,11 @@ configure_file (
   "${PROJECT_SOURCE_DIR}/include/hdl_graph_slam/version.h"
 )
 
-# add_definitions(-std=c++11)
-set(CMAKE_CXX_FLAGS "-std=c++11")
+if("$ENV{ROS_DISTRO}" STRGREATER "melodic")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 find_package(catkin REQUIRED COMPONENTS roscpp ndt_omp hdl_graph_slam roslib)
