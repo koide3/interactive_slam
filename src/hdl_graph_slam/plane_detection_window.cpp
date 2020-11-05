@@ -30,7 +30,9 @@ PlaneDetectionWindow::PlaneDetectionWindow(std::shared_ptr<InteractiveGraphView>
       num_neighbors(10),
       smoothness_threshold(10.0f),
       curvature_threshold(0.5f),
-      ransac_distance_thresh(0.25f),
+      enable_normal_filtering(true),
+      normal_threshold(45.0f),
+      ransac_distance_thresh(0.15f),
       min_plane_supports(100),
       robust_kernel(1),
       robust_kernel_delta(0.1f),
@@ -116,8 +118,8 @@ RegionGrowingResult::Ptr PlaneDetectionWindow::region_growing(guik::ProgressInte
   pcl::PointIndices::Ptr cluster(new pcl::PointIndices());
   reg.getSegmentFromPoint(0, *cluster);
 
-  result->cloud.reset(new pcl::PointCloud<pcl::PointXYZI>());
-  result->normals.reset(new pcl::PointCloud<pcl::Normal>());
+  pcl::PointCloud<pcl::PointXYZI>::Ptr extracted_cloud(new pcl::PointCloud<pcl::PointXYZI>());
+  pcl::PointCloud<pcl::Normal>::Ptr extracted_normals(new pcl::PointCloud<pcl::Normal>());
 
   progress.set_text("extract indices");
   progress.increment();
@@ -125,13 +127,37 @@ RegionGrowingResult::Ptr PlaneDetectionWindow::region_growing(guik::ProgressInte
   extract.setInputCloud(accumulated_points);
   extract.setIndices(cluster);
   extract.setNegative(false);
-  extract.filter(*result->cloud);
+  extract.filter(*extracted_cloud);
 
   pcl::ExtractIndices<pcl::Normal> extract_normals;
   extract_normals.setInputCloud(accumulated_normals);
   extract_normals.setIndices(cluster);
   extract_normals.setNegative(false);
-  extract_normals.filter(*result->normals);
+  extract_normals.filter(*extracted_normals);
+
+  if(enable_normal_filtering) {
+    progress.set_text("normal filtering");
+    result->cloud.reset(new pcl::PointCloud<pcl::PointXYZI>());
+    result->normals.reset(new pcl::PointCloud<pcl::Normal>());
+
+    for(int i = 0; i < extracted_cloud->size(); i++) {
+      double angle = std::acos(extracted_normals->at(i).getNormalVector3fMap().dot(extracted_normals->at(0).getNormalVector3fMap()));
+      if(angle > normal_threshold * M_PI / 180.0) {
+        continue;
+      }
+
+      result->cloud->push_back(extracted_cloud->at(i));
+      result->normals->push_back(extracted_normals->at(i));
+    }
+
+    result->cloud->width = result->cloud->size();
+    result->cloud->height = 1;
+    result->normals->width = result->normals->size();
+    result->normals->height = 1;
+  } else {
+    result->cloud = extracted_cloud;
+    result->normals = extracted_normals;
+  }
 
   progress.set_text("done");
   progress.increment();
@@ -148,6 +174,10 @@ PlaneDetectionResult::Ptr PlaneDetectionWindow::detect_plane(const RegionGrowing
 
   pcl::PointIndices::Ptr inliers(new pcl::PointIndices());
   ransac.getInliers(inliers->indices);
+
+  if(std::find(inliers->indices.begin(), inliers->indices.end(), 0) == inliers->indices.end()) {
+    std::cerr << "center_point not found in inliers!!" << std::endl;
+  }
 
   PlaneDetectionResult::Ptr result(new PlaneDetectionResult());
   ransac.getModelCoefficients(result->coeffs);
@@ -230,6 +260,9 @@ void PlaneDetectionWindow::draw_ui() {
   ImGui::DragInt("Num neighbors", &num_neighbors, 1, 1, 1000);
   ImGui::DragFloat("Smoothness threshold[deg]", &smoothness_threshold, 0.1f, 0.1f, 100.0f);
   ImGui::DragFloat("Curvature threshold", &curvature_threshold, 0.1f, 0.1f, 100.0f);
+
+  ImGui::Checkbox("Normal filtering", &enable_normal_filtering);
+  ImGui::DragFloat("Normal threshold[deg]", &normal_threshold, 1.0f, 1.0f, 180.0f);
 
   if (ImGui::Button("Perform")) {
     region_growing_result = nullptr;

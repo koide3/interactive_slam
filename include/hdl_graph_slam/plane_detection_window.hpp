@@ -67,6 +67,9 @@ private:
   float smoothness_threshold;
   float curvature_threshold;
 
+  bool enable_normal_filtering;
+  float normal_threshold;
+
   float ransac_distance_thresh;
   int min_plane_supports;
 
