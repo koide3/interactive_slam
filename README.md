@@ -60,6 +60,13 @@ cd ~/catkin_ws && rm -rf build devel    # be aware of that this command removes 
 CC=clang CXX=clang++ catkin_make -DCMAKE_BUILD_TYPE=Release
 ```
 
+***Testing the build***
+```bash
+source ~/catkin_ws/devel/setup.bash
+rosrun interactive_slam interactive_slam
+```
+The GUI should pop out if successfully built.
+
 ## Examples
 
 ### Example1 - Basic usage with hdl_graph_slam
