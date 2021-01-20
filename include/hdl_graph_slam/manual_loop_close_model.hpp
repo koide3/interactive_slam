@@ -25,6 +25,8 @@ public:
 
   bool set_end_keyframe(int keyframe_id);
 
+  bool has_begin_keyframe();
+
   bool run();
 
   void close();
