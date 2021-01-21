@@ -66,7 +66,7 @@ bool ManualLoopCloseModal::run() {
         ImGui::Text("begin_keyframe has not been set");
       }
       if (end_keyframe == nullptr) {
-        ImGui::Text("begin_keyframe has not been set");
+        ImGui::Text("end_keyframe has not been set");
       }
     } else {
       // create OpenGL canvas
