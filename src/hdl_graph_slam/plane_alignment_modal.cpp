@@ -41,6 +41,10 @@ bool PlaneAlignmentModal::set_end_plane(int plane_id) {
   return true;
 }
 
+bool PlaneAlignmentModal::has_begin_plane() {
+  return plane_begin != nullptr;
+}
+
 void PlaneAlignmentModal::close() {
   plane_begin = nullptr;
   plane_end = nullptr;

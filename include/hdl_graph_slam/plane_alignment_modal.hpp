@@ -23,6 +23,8 @@ public:
   bool set_begin_plane(int plane_id);
   bool set_end_plane(int plane_id);
 
+  bool has_begin_plane();
+
   bool run();
 
   void close();

@@ -1,5 +1,6 @@
 #include <memory>
 #include <imgui.h>
+#include <imgui_internal.h>
 #include <portable-file-dialogs.h>
 
 #include <glk/lines.hpp>
@@ -643,9 +644,17 @@ private:
           manual_loop_close_modal->set_begin_keyframe(picked_id);
           ImGui::CloseCurrentPopup();
         }
+        if(!manual_loop_close_modal->has_begin_keyframe()){
+          ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+          ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+        }
         if(ImGui::Button("Loop end")) {
           manual_loop_close_modal->set_end_keyframe(picked_id);
           ImGui::OpenPopup("manual loop close");
+        }
+        if(!manual_loop_close_modal->has_begin_keyframe()){
+          ImGui::PopItemFlag();
+          ImGui::PopStyleVar();
         }
       }
 
@@ -657,9 +666,17 @@ private:
           plane_alignment_modal->set_begin_plane(picked_id);
           ImGui::CloseCurrentPopup();
         }
+        if(!plane_alignment_modal->has_begin_plane()){
+          ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+          ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+        }
         if(ImGui::Button("Loop end")) {
           plane_alignment_modal->set_end_plane(picked_id);
           ImGui::OpenPopup("plane alignment");
+        }
+        if(!plane_alignment_modal->has_begin_plane()){
+          ImGui::PopItemFlag();
+          ImGui::PopStyleVar();
         }
 
         if(ImGui::BeginMenu("Prior")) {
