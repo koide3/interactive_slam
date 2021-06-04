@@ -45,10 +45,12 @@ public:
     shader.set_uniform("material_color", Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f));
     shader.set_uniform("info_values", Eigen::Vector4i(VERTEX | KEYFRAME, kf->id(), 0, 0));
 
+    shader.set_uniform("apply_keyframe_scale", true);
     model_matrix.block<3, 3>(0, 0) *= 0.35;
     shader.set_uniform("model_matrix", model_matrix);
     const auto& sphere = glk::Primitives::instance()->primitive(glk::Primitives::SPHERE);
     sphere.draw(shader);
+    shader.set_uniform("apply_keyframe_scale", false);
   }
 
   virtual void draw(const DrawFlags& flags, glk::GLSLShader& shader, const Eigen::Vector4f& color, const Eigen::Matrix4f& model_matrix) override {
@@ -68,8 +70,10 @@ public:
 
     shader.set_uniform("color_mode", 1);
     shader.set_uniform("info_values", Eigen::Vector4i(VERTEX | KEYFRAME, kf->id(), 0, 0));
+    shader.set_uniform("apply_keyframe_scale", true);
     const auto& sphere = glk::Primitives::instance()->primitive(glk::Primitives::SPHERE);
     sphere.draw(shader);
+    shader.set_uniform("apply_keyframe_scale", false);
   }
 
 private:
