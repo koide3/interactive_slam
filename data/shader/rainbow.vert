@@ -1,6 +1,8 @@
 #version 330
 uniform float point_size;
 uniform float point_scale;
+uniform bool apply_keyframe_scale;
+uniform float keyframe_scale;
 uniform mat4 model_matrix;
 uniform mat4 view_matrix;
 uniform mat4 projection_matrix;
@@ -44,7 +46,13 @@ vec4 rainbow(vec3 position) {
 }
 
 void main() {
-    vec4 world_position = model_matrix * vec4(vert_position, 1.0);
+    vec4 world_position;
+    if(apply_keyframe_scale){
+        world_position = model_matrix * vec4(keyframe_scale * vert_position, 1.0);
+    }
+    else{
+        world_position = model_matrix * vec4(vert_position, 1.0);
+    }
     frag_world_position = world_position.xyz;
     gl_Position = projection_matrix * view_matrix * world_position;
 
