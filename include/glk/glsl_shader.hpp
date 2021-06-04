@@ -50,6 +50,12 @@ public:
     return mat;
   }
 
+  float get_uniform1f(const std::string& name){
+    float res;
+    glGetUniformfv(shader_program, uniform(name), &res);
+    return res;
+  }
+
   void set_uniform(const std::string& name, int value) { glUniform1i(uniform(name), value); }
   void set_uniform(const std::string& name, float value) { glUniform1f(uniform(name), value); }
   void set_uniform(const std::string& name, const Eigen::Vector2f& vector) { glUniform2fv(uniform(name), 1, vector.data()); }
