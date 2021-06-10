@@ -100,8 +100,10 @@ public:
 
     shader.set_uniform("color_mode", 1);
     shader.set_uniform("material_color", Eigen::Vector4f(1.0f, 0.0f, 0.0f, 1.0f));
+    shader.set_uniform("apply_keyframe_scale", true);
     auto& sphere = glk::Primitives::instance()->primitive(glk::Primitives::SPHERE);
     sphere.draw(shader);
+    shader.set_uniform("apply_keyframe_scale", false);
   }
 private:
   pcl::PointCloud<pcl::PointXYZI>::Ptr load_cloud(const std::string& filename) const {

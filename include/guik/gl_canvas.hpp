@@ -49,6 +49,7 @@ public:
 
 private:
   float point_size;
+  float keyframe_scale;
   float min_z;
   float max_z;
   bool z_clipping;
