@@ -1,20 +1,22 @@
 sudo: required
 language: generic
 dist: bionic
-
 services:
-  - docker
-
+- docker
 matrix:
   include:
-    - name: "Bionic melodic LLVM"
-      env: ROS_DISTRO=melodic_llvm
-    - name: "Bionic melodic"
-      env: ROS_DISTRO=melodic
-    - name: "Focal Fossa noetic"
-      env: ROS_DISTRO=noetic
-    - name: "Focal Fossa noetic LLVM"
-      env: ROS_DISTRO=noetic_llvm
-
+  - name: Bionic melodic LLVM
+    env: ROS_DISTRO=melodic_llvm
+  - name: Bionic melodic
+    env: ROS_DISTRO=melodic
+  - name: Focal Fossa noetic
+    env: ROS_DISTRO=noetic
+  - name: Focal Fossa noetic LLVM
+    env: ROS_DISTRO=noetic_llvm
 script:
-  - docker build -f ./docker/$ROS_DISTRO/Dockerfile .
+- echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin || true
+- docker build -f ./docker/$ROS_DISTRO/Dockerfile .
+env:
+  global:
+  - secure: au1m4RyujCE0bTOB52suOZU4QCmO9l9KWQ/8hU4t16kBUD90GFusoGLm/fCxy7dxoGgFy5sOGp/H1KxZql9pkw5D5HoorW2EBqGd+ogyI4HOhLoQZxvlTjucBe0Nz1vPsk7GzK62YjC0KjHpTsd2F/roR3v5brfP4s6AKjIb/H7SagL3EAnCFARytoWNxCyV51qibpMs3Yl+dlEb/lqp85bftStXVbMGGxY52CwTZkl02wQiVFN/qFcVQc8BAQjpK6rqei9L82ZEF4f86MsqNKbPhUyVKVaFmNJEwUrvSbItXVnFNY1Lii40L9xN1EHxwKVZOScgnWkzq8z7Z9hr6u+NIZRu9Om1ssHBr/A1w/zPFUkWlmLAtze1T3mqavclJf7YzMsML9vsY0a1PKtLS3J8rG/Bj0wkaqonAo6sIJgFVE4c/eM1GoeHyEjQngeyVjPDWvVQcvJhrcGWe7NZIZxgbiMORrvRIBZCLxT89EupArdfdHjLogKIQEkYdpFnc/tQyuQVL8W1IDLoiSIF9bMNkk1tXf4Ugpgo//S4780NuR649u1UmVif2l0Sv8IeXLCwkgs8uSmUYKP8m9e6Vn6IgVziq9IogmGJ8HyZEmfRVnNHXjj3IxKf7PvNxlAFvrSukCroexR1I8Jh8WJUyUfzrfdYPUS8QuLrNsS5obQ=
+  - secure: hJWXbj+YbkENMmDYjTaOdl5YuDAIK798npNb/EyTJgbfrH/x074+1hEx4iBAOH5yBGKYsZyGP3jJ70l+TXok9MpLdx1HG6vAco5Pk+cRGcsLdWrlufwtirvFVHAtl6EfC6YcwtFFL7/tae9HwUU7lgUPKGy4wQVgolIIqKlfU3QhE5yQEKdBfH7Lc0SABmJW92l+iSc5+6ntDWFSdPD2uxamfmyhMVerub5v/MWRFzLmM0TmNjnznVzPNKrW9acJrV/ytFtEUpM87a/3Y+5DwLDhFMuoPxjuNRk7wwfeajoWAOSK4EL/uw5xf4vImBfPOQutP4qgkmJCpCt8QDuymAZbffdhsZr2dHK2P43Db/J/j3Hm9OQImZlWV4VRy3qAZoDZyTDse49bmPNZbn2Vr7JnJRXEoviGP8lWxzuzzMKymf7gKe4bcQdUpmQ9pPDfYHI3BjQHLph3s5UWN+IMf0E2Dm3eEEL+P8PVrvSTrXOdYTgR8RMiivNbv40wj8XPlFdtG3tVt24OsPVLJilUjC8UH4b5sXJfqobL5laFAPQvB7HPDapWjDPrCdn9sNHSS8RTisZsDxMKkYRzEDtC3ASKqY3FSmTCOmN5OkpOYKX+CJIMWPDScZyrfh40o+MI0ET4vI3hGOA32l3B8VBNK8TvVFfL/7k9Gjot8RaU20c=
