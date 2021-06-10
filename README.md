@@ -37,6 +37,8 @@ sudo apt-get install ros-melodic-geodesy ros-melodic-pcl-ros ros-melodic-nmea-ms
 ```bash
 cd ~/catkin_ws/src
 git clone https://github.com/koide3/ndt_omp
+# on melodic
+# git clone https://github.com/koide3/ndt_omp -b melodic
 git clone https://github.com/koide3/hdl_graph_slam
 git clone https://github.com/koide3/odometry_saver
 git clone https://github.com/SMRT-AIST/fast_gicp --recursive
