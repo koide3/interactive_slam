@@ -14,7 +14,7 @@ This package is built on top of the ROS ecosystem. You can start building a map 
 
 This package has been tested on Ubuntu 18.04 & ROS melodic or later.
 
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/294925db25014c2ba6698cb2841de365)](https://www.codacy.com/manual/koide3/interactive_slam?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=koide3/interactive_slam&amp;utm_campaign=Badge_Grade)　[![Build Status](https://travis-ci.org/SMRT-AIST/interactive_slam.svg?branch=master)](https://travis-ci.org/SMRT-AIST/interactive_slam)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/294925db25014c2ba6698cb2841de365)](https://www.codacy.com/manual/koide3/interactive_slam?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=koide3/interactive_slam&amp;utm_campaign=Badge_Grade)　[![Build](https://github.com/SMRT-AIST/interactive_slam/actions/workflows/build.yml/badge.svg)](https://github.com/SMRT-AIST/interactive_slam/actions/workflows/build.yml)
 
 ## Installation
 ***interactive_slam*** depends on the following libraries:
