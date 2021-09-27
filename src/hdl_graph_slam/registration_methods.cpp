@@ -29,7 +29,7 @@ pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr RegistrationMethods::meth
 
   switch(registration_method) {
     case 0: {
-      auto icp = boost::make_shared<pcl::IterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>>();
+      auto icp = pcl::make_shared<pcl::IterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>>();
       registration = icp;
     } break;
 
@@ -37,23 +37,23 @@ pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr RegistrationMethods::meth
       std::cerr << "warning: unknown registration method!!" << std::endl;
       std::cerr << "       : use GICP" << std::endl;
     case 1: {
-      auto gicp = boost::make_shared<pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>>();
+      auto gicp = pcl::make_shared<pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>>();
       registration = gicp;
     } break;
 
     case 2: {
-      auto ndt = boost::make_shared<pcl::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>>();
+      auto ndt = pcl::make_shared<pcl::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>>();
       ndt->setResolution(registration_resolution);
       registration = ndt;
     } break;
 
     case 3: {
-      auto gicp = boost::make_shared<pclomp::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>>();
+      auto gicp = pcl::make_shared<pclomp::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>>();
       registration = gicp;
     } break;
 
     case 4: {
-      auto ndt = boost::make_shared<pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>>();
+      auto ndt = pcl::make_shared<pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>>();
       ndt->setResolution(registration_resolution);
       registration = ndt;
     } break;
