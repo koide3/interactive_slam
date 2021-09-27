@@ -3,6 +3,7 @@
 #include <portable-file-dialogs.h>
 
 #include <boost/format.hpp>
+#include <boost/filesystem.hpp>
 
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
