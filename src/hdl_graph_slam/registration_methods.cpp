@@ -29,7 +29,7 @@ pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr RegistrationMethods::meth
 
   switch(registration_method) {
     case 0: {
-      auto icp = pcl::make_shared<pcl::IterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>>();
+      auto icp = pcl::IterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>::Ptr(new pcl::IterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>);
       registration = icp;
     } break;
 
@@ -37,23 +37,23 @@ pcl::Registration<pcl::PointXYZI, pcl::PointXYZI>::Ptr RegistrationMethods::meth
       std::cerr << "warning: unknown registration method!!" << std::endl;
       std::cerr << "       : use GICP" << std::endl;
     case 1: {
-      auto gicp = pcl::make_shared<pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>>();
+      auto gicp = pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>::Ptr(new pcl::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>);
       registration = gicp;
     } break;
 
     case 2: {
-      auto ndt = pcl::make_shared<pcl::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>>();
+      auto ndt = pcl::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>::Ptr(new pcl::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>);
       ndt->setResolution(registration_resolution);
       registration = ndt;
     } break;
 
     case 3: {
-      auto gicp = pcl::make_shared<pclomp::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>>();
+      auto gicp = pclomp::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>::Ptr(new pclomp::GeneralizedIterativeClosestPoint<pcl::PointXYZI, pcl::PointXYZI>);
       registration = gicp;
     } break;
 
     case 4: {
-      auto ndt = pcl::make_shared<pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>>();
+      auto ndt = pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>::Ptr(new pclomp::NormalDistributionsTransform<pcl::PointXYZI, pcl::PointXYZI>);
       ndt->setResolution(registration_resolution);
       registration = ndt;
     } break;
