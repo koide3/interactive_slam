@@ -24,12 +24,15 @@ public:
   Eigen::Vector2i framebuffer_size();
   virtual void framebuffer_size_callback(const Eigen::Vector2i& size);
 
+  inline void set_max_frame_rate(double frame_rate) { max_frame_rate = frame_rate; }
+
   virtual void draw_ui();
 
   virtual void draw_gl();
 
 protected:
   GLFWwindow* window;
+  double max_frame_rate;
 };
 
 }  // namespace guik

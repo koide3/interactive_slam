@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include <unordered_map>
+#include <chrono>
+#include <thread>
 
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
@@ -12,7 +14,7 @@
 
 namespace guik {
 
-Application::Application() : window(nullptr) {}
+Application::Application() : window(nullptr), max_frame_rate(60.0) {}
 
 Application ::~Application() {
   if(!window) {
@@ -73,6 +75,7 @@ bool Application::init(const char* window_name, const Eigen::Vector2i& size, con
 
 void Application::run() {
   while(!glfwWindowShouldClose(window)) {
+    std::chrono::system_clock::time_point draw_start_time = std::chrono::system_clock::now();
     glfwPollEvents();
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -92,6 +95,13 @@ void Application::run() {
 
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     glfwSwapBuffers(window);
+
+    std::chrono::duration<double, std::milli> draw_time_ms = std::chrono::system_clock::now() - draw_start_time;
+    if (draw_time_ms.count() < 1000/max_frame_rate) {
+        std::chrono::duration<double, std::milli> delta_ms(1000/max_frame_rate - draw_time_ms.count());
+        auto delta_ms_duration = std::chrono::duration_cast<std::chrono::milliseconds>(delta_ms);
+        std::this_thread::sleep_for(std::chrono::milliseconds(delta_ms_duration.count()));
+    }
   }
 }
 
