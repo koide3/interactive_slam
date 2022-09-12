@@ -29,9 +29,43 @@ This package has been tested on Ubuntu 18.04 & ROS melodic or later.
 
 
 ```bash
-# for ROS melodic
+# for ROS noetic
 sudo apt-get install libglm-dev libglfw3-dev
-sudo apt-get install ros-melodic-geodesy ros-melodic-pcl-ros ros-melodic-nmea-msgs ros-melodic-libg2o
+sudo apt-get install libsuitesparse-dev libeigen3-dev
+sudo apt-get install ros-noetic-geodesy ros-noetic-pcl-ros ros-noetic-nmea-msgs 
+```
+
+```bash
+# Install g2o from original source code
+git clone https://github.com/RainerKuemmerle/g2o.git
+cd g2o
+mkdir build 
+cd build
+cmake ../
+make
+sudo make install
+```
+
+```bash
+# Install Ceres Library
+git clone https://ceres-solver.googlesource.com/ceres-solver
+# Install all dependencies
+# CMake
+sudo apt-get install cmake
+# google-glog + gflags
+sudo apt-get install libgoogle-glog-dev libgflags-dev
+# Use ATLAS for BLAS & LAPACK
+sudo apt-get install libatlas-base-dev
+# Eigen3
+sudo apt-get install libeigen3-dev
+# SuiteSparse (optional)
+sudo apt-get install libsuitesparse-dev
+cd ceres-solver
+mkdir build 
+cd build
+cmake ../
+make
+sudo make install
 ```
 
 ```bash
