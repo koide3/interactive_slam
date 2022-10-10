@@ -24,7 +24,7 @@ This package has been tested on Ubuntu 18.04 & ROS melodic or later.
   - [Dear ImGui](https://github.com/ocornut/imgui)
   - [portable-file-dialog](portable-file-dialog)
   - [OpenMP](https://www.openmp.org/)
-  - [PCL](https://github.com/skaslev/gl3w)
+  - [PCL](https://pointclouds.org/)
   - [g2o](https://github.com/RainerKuemmerle/g2o)
 
 
