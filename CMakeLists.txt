@@ -23,7 +23,7 @@ else()
 endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
-find_package(catkin REQUIRED COMPONENTS roscpp ndt_omp hdl_graph_slam roslib)
+find_package(catkin REQUIRED COMPONENTS fast_gicp roscpp ndt_omp hdl_graph_slam roslib)
 
 find_package(GLM REQUIRED)
 find_package(OpenGL REQUIRED)
