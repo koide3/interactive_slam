@@ -13,6 +13,9 @@
   <build_depend>roscpp</build_depend>
   <build_depend>ndt_omp</build_depend>
   <build_depend>hdl_graph_slam</build_depend>
+  <build_depend>libglfw3-dev</build_depend>
+  <build_depend>libglm-dev</build_depend>
+  <build_depend>libg2o</build_depend>
   <build_depend>roslib</build_depend>
   <buildtool_depend>catkin</buildtool_depend>
 
