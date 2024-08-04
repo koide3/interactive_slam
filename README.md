@@ -1,3 +1,7 @@
+# New SLAM Package Released
+
+We released [a new SLAM package GLIM](https://github.com/koide3/glim) that has [interactive map correction features](https://koide3.github.io/glim/quickstart.html#mapping-result).
+
 # interactive_slam
 ***interactive_slam*** is an open source 3D LIDAR-based mapping framework. In contrast to existing automatic SLAM packages, we aim to develop a semi-automatic framework which allows the user to interactively and intuitively correct mapping failures (e.g., corrupted odometry, wrong loop detection, distorted map, etc) with minimal human effort. This framework provides several map correction features:
   - [Manual & Automatic] Loop closing
